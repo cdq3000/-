@@ -349,48 +349,52 @@ function showToast(msg, isError) {
   setTimeout(() => t.classList.remove('show'), 2500);
 }
 
-// ── 读取 Gist（用 API 避免 CDN 缓存，带 ETag） ──
+// ── 读取 Gist（优先 raw URL，有 Token 时用 API + ETag） ──
 async function fetchFromGist() {
   setSyncStatus('syncing');
-  try {
-    const h = authHeaders() || { 'Accept':'application/vnd.github+json', 'X-GitHub-Api-Version':'2022-11-28' };
-    if (_gistEtag) h['If-None-Match'] = _gistEtag;
-    const resp = await fetch(API_BASE, { headers: h });
-    if (resp.status === 304) {
-      setSyncStatus(getToken() ? 'ok' : 'no_token');
-      return true; // 没变化
-    }
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    _gistEtag = resp.headers.get('ETag') || '';
-    const gist = await resp.json();
-    const file = gist.files[GIST_FILENAME];
-    if (!file || !file.content) throw new Error('No data');
-    const data = JSON.parse(file.content);
-    _stores = data.stores && data.stores.length > 0 ? data.stores : [...DEFAULT_STORES];
-    _schedule = data.schedule || {};
-    _records = data.records || [];
-    _lastUpdated = data.lastUpdated || '';
-    setSyncStatus(getToken() ? 'ok' : 'no_token');
-    return true;
-  } catch (e) {
-    console.error('Fetch failed:', e);
-    // 降级：用 raw URL 读
+  let data = null;
+
+  // 方式1：有 Token 时用 API 读（可获取最新数据 + ETag 省流量）
+  if (getToken()) {
+    try {
+      const h = authHeaders();
+      if (_gistEtag) h['If-None-Match'] = _gistEtag;
+      const resp = await fetch(API_BASE, { headers: h });
+      if (resp.status === 304) {
+        // 没变化，但如果本地数据为空（首次加载），继续走 raw URL
+        if (_stores.length > 0) {
+          setSyncStatus('ok');
+          return true;
+        }
+      } else if (resp.ok) {
+        _gistEtag = resp.headers.get('ETag') || '';
+        const gist = await resp.json();
+        const file = gist.files[GIST_FILENAME];
+        if (file && file.content) data = JSON.parse(file.content);
+      }
+    } catch (e) { console.warn('API 读取失败，降级到 raw URL:', e.message); }
+  }
+
+  // 方式2：用 raw URL 读（无需 Token，不会被限流）
+  if (!data) {
     try {
       const resp = await fetch(GIST_RAW + '?t=' + Date.now());
-      if (resp.ok) {
-        const data = await resp.json();
-        _stores = data.stores && data.stores.length > 0 ? data.stores : [...DEFAULT_STORES];
-        _schedule = data.schedule || {};
-        _records = data.records || [];
-        _lastUpdated = data.lastUpdated || '';
-        setSyncStatus(getToken() ? 'ok' : 'no_token');
-        return true;
-      }
-    } catch(e2) {}
-    setSyncStatus('error');
-    showToast('⚠️ 数据加载失败，请检查网络', true);
-    return false;
+      if (resp.ok) data = await resp.json();
+      else throw new Error('Raw URL HTTP ' + resp.status);
+    } catch (e) {
+      console.error('Raw URL 读取失败:', e);
+      setSyncStatus('error');
+      showToast('⚠️ 数据加载失败，请检查网络', true);
+      return false;
+    }
   }
+
+  _stores = (data && data.stores && data.stores.length > 0) ? data.stores : [...DEFAULT_STORES];
+  _schedule = (data && data.schedule) || {};
+  _records = (data && data.records) || [];
+  _lastUpdated = (data && data.lastUpdated) || '';
+  setSyncStatus(getToken() ? 'ok' : 'no_token');
+  return true;
 }
 
 // ── 写入 Gist ──
@@ -419,18 +423,30 @@ async function pushToGist() {
   }
 }
 
-// ── 静默刷新 ──
+// ── 静默刷新（优先 raw URL，有 Token 时用 API + ETag） ──
 async function silentRefresh() {
+  let data = null;
   try {
-    const h = authHeaders() || { 'Accept':'application/vnd.github+json', 'X-GitHub-Api-Version':'2022-11-28' };
-    if (_gistEtag) h['If-None-Match'] = _gistEtag;
-    const resp = await fetch(API_BASE, { headers: h });
-    if (resp.status === 304) return;
-    if (!resp.ok) return;
-    _gistEtag = resp.headers.get('ETag') || '';
-    const gist = await resp.json();
-    const data = JSON.parse(gist.files[GIST_FILENAME].content);
-    if (data.lastUpdated !== _lastUpdated) {
+    // 有 Token 时用 API + ETag（省流量）
+    if (getToken()) {
+      const h = authHeaders();
+      if (_gistEtag) h['If-None-Match'] = _gistEtag;
+      const resp = await fetch(API_BASE, { headers: h });
+      if (resp.status === 304) { setSyncStatus('ok'); return; }
+      if (resp.ok) {
+        _gistEtag = resp.headers.get('ETag') || '';
+        const gist = await resp.json();
+        const file = gist.files[GIST_FILENAME];
+        if (file && file.content) data = JSON.parse(file.content);
+      }
+    }
+    // 无 Token 或 API 失败 → 用 raw URL
+    if (!data) {
+      const resp = await fetch(GIST_RAW + '?t=' + Date.now());
+      if (resp.ok) data = await resp.json();
+      else return; // 也失败就静默跳过
+    }
+    if (data && data.lastUpdated !== _lastUpdated) {
       _stores = data.stores && data.stores.length > 0 ? data.stores : _stores;
       _schedule = data.schedule || {};
       _records = data.records || [];
@@ -438,7 +454,7 @@ async function silentRefresh() {
       refreshAll();
     }
     setSyncStatus(getToken() ? 'ok' : 'no_token');
-  } catch (e) { /* silent */ }
+  } catch (e) { /* 静默跳过，不覆盖同步状态 */ }
 }
 
 function refreshAll() {
