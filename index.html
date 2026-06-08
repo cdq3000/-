@@ -579,8 +579,9 @@ function selectDate(dateStr) {
     html += '<div class="date-slots">';
     slots.forEach(sl => {
       const stLabel = sl.status === 'done' ? '✅已完成' : sl.status === 'pending' ? '⏳待复盘' : '❌已取消';
+      const timeDisplay = sl.time ? ` 🕐 ${sl.time}` : '';
       html += `<div class="ds-item">
-        <span><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${sl.color};margin-right:6px;"></span>${sl.store}</span>
+        <span><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${sl.color};margin-right:6px;"></span>${sl.store}${timeDisplay}</span>
         <div style="display:flex;gap:4px;align-items:center;">
           <select onchange="updateSlot('${sl.store}','${sl.date}',this.value)" style="font-size:10.5px;">
             <option value="pending" ${sl.status==='pending'?'selected':''}>⏳待复盘</option>
@@ -594,21 +595,24 @@ function selectDate(dateStr) {
     html += '</div>';
   }
   
-  // 快速预约
+  // 快速预约（带时间）
   html += `<div style="font-size:12px;color:var(--t2);margin-bottom:6px;font-weight:600;">快速预约门店</div>
-    <div class="quick-add"><select id="quickStore" style="flex:1;background:var(--bg1);border:1px solid #2a3055;color:var(--t1);border-radius:6px;padding:6px 10px;font-size:12px;font-family:inherit;outline:none;">
-      ${_stores.map(s => `<option value="${s.name}">${s.name}</option>`).join('')}
-    </select>
-    <button onclick="quickBookDate('${dateStr}')">✅ 预约</button></div>`;
+    <div class="quick-add">
+      <select id="quickStore" style="flex:1;background:var(--bg1);border:1px solid #2a3055;color:var(--t1);border-radius:6px;padding:6px 10px;font-size:12px;font-family:inherit;outline:none;">
+        ${_stores.map(s => `<option value="${s.name}">${s.name}</option>`).join('')}
+      </select>
+      <input id="quickTime" type="time" value="09:00" style="width:100px;background:var(--bg1);border:1px solid #2a3055;color:var(--t1);border-radius:6px;padding:6px 8px;font-size:12px;font-family:inherit;outline:none;">
+      <button onclick="quickBookDate('${dateStr}')">✅ 预约</button></div>`;
   
   right.innerHTML = html;
 }
 
 async function quickBookDate(dateStr) {
   const store = document.getElementById('quickStore').value;
+  const timeVal = document.getElementById('quickTime').value || '09:00';
   if (!_schedule[store]) _schedule[store] = [];
   if (_schedule[store].some(sl => sl.date === dateStr)) { showToast('该门店此日期已排班', true); return; }
-  _schedule[store].push({ date: dateStr, status: 'pending', createdAt: new Date().toISOString() });
+  _schedule[store].push({ date: dateStr, time: timeVal, status: 'pending', createdAt: new Date().toISOString() });
   if (await pushToGist()) {
     selectDate(dateStr);
     renderCalendar(); renderSchedule();
@@ -653,7 +657,7 @@ function renderSchedule() {
     const slotsHTML = slots.length > 0
       ? slots.map(sl => `<span class="s-slot ${sl.status}">
           <span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:${sl.status==='done'?'#00ff88':sl.status==='pending'?'#ff9f43':'#5a6a8a'};margin-right:2px;"></span>
-          ${sl.date.slice(5)}</span>`).join('')
+          ${sl.date.slice(5)}${sl.time ? ' '+sl.time : ''}</span>`).join('')
       : '<span style="font-size:11px;color:var(--t3);">暂无排班</span>';
 
     return `<div class="s-card">
@@ -872,22 +876,40 @@ function renderMemoHistory(storeName) {
   if (!box) return;
   const recs = (_records || []).filter(r => r.store === storeName).sort((a,b) => (b.date||'').localeCompare(a.date||''));
   if (recs.length === 0) { box.innerHTML = '<div class="empty-state"><div class="icon">📂</div>暂无记录</div>'; return; }
-  box.innerHTML = recs.map(r => `
+  box.innerHTML = recs.map((r, idx) => {
+    const globalIdx = _records.indexOf(r);
+    return `
     <div class="h-item">
-      <span class="h-date">${r.date}</span>
-      <span class="h-type ${r.type}">${r.type==='pre'?'📋 会前大纲':'📝 会后纪要'}</span>
-      <span style="font-size:10.5px;padding:1px 6px;border-radius:4px;margin-left:6px;${r.status==='done'?'background:rgba(0,255,136,.1);color:var(--green)':r.status==='pending'?'background:rgba(255,159,67,.12);color:var(--orange)':'background:rgba(90,106,138,.12);color:var(--t3)'}">${r.status==='done'?'✅已完成':r.status==='pending'?'⏳待复盘':'❌已取消'}</span>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div>
+          <span class="h-date">${r.date}</span>
+          <span class="h-type ${r.type}">${r.type==='pre'?'📋 会前大纲':'📝 会后纪要'}</span>
+          <span style="font-size:10.5px;padding:1px 6px;border-radius:4px;margin-left:6px;${r.status==='done'?'background:rgba(0,255,136,.1);color:var(--green)':r.status==='pending'?'background:rgba(255,159,67,.12);color:var(--orange)':'background:rgba(90,106,138,.12);color:var(--t3)'}">${r.status==='done'?'✅已完成':r.status==='pending'?'⏳待复盘':'❌已取消'}</span>
+        </div>
+        <button onclick="deleteMemo(${globalIdx})" style="background:none;border:none;color:var(--t3);font-size:13px;cursor:pointer;padding:2px 6px;" title="删除记录">🗑️</button>
+      </div>
       <div class="h-summary">${(r.content||'').slice(0,80)}${(r.content||'').length>80?'...':''}</div>
       <span class="h-expand" onclick="toggleFull(this)">📖 展开全文</span>
       <div class="h-full">${r.content||''}</div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }
 
 function toggleFull(el) {
   const full = el.nextElementSibling;
   if (full.style.display === 'none' || !full.style.display) { full.style.display = 'block'; el.textContent = '📕 收起'; }
   else { full.style.display = 'none'; el.textContent = '📖 展开全文'; }
+}
+
+async function deleteMemo(idx) {
+  if (!confirm('确定删除这条复盘记录？此操作不可恢复。')) return;
+  const storeName = _records[idx].store;
+  _records.splice(idx, 1);
+  if (await pushToGist()) {
+    renderMemoHistory(storeName);
+    renderStoreList();
+    showToast('✅ 已删除');
+  }
 }
 
 // ═══════════════════════════════════════════
