@@ -846,6 +846,8 @@ function switchMemoTab(tab, btn, storeName) {
   if (tab === 'history') renderMemoHistory(storeName);
 }
 
+let _editingMemoIdx = -1; // 正在编辑的记录在 _records 中的索引
+
 async function saveMemo(type, storeName) {
   const date = document.getElementById(type + 'Date').value;
   const status = document.getElementById(type + 'Status').value;
@@ -856,19 +858,92 @@ async function saveMemo(type, storeName) {
   if (!date || !content) { msgEl.textContent = '请填写日期和内容'; msgEl.style.color = 'var(--red)'; return; }
   btn.disabled = true; btn.textContent = '保存中...';
   
-  _records.push({ store: storeName, date, type, status, content, createdAt: new Date().toISOString() });
+  if (_editingMemoIdx >= 0 && _records[_editingMemoIdx]) {
+    // 编辑模式：覆盖旧记录
+    _records[_editingMemoIdx].date = date;
+    _records[_editingMemoIdx].status = status;
+    _records[_editingMemoIdx].content = content;
+    _records[_editingMemoIdx].updatedAt = new Date().toISOString();
+  } else {
+    // 新增模式
+    _records.push({ store: storeName, date, type, status, content, createdAt: new Date().toISOString() });
+  }
+  
   const ok = await pushToGist();
-  btn.disabled = false; btn.textContent = '💾 保存' + (type === 'pre' ? '大纲' : '纪要');
+  btn.disabled = false;
+  
+  // 恢复按钮文字和编辑状态
+  cancelEditMode(type);
   
   if (ok) {
-    msgEl.textContent = '✅ 已保存到云端'; msgEl.style.color = 'var(--green)';
+    msgEl.textContent = _editingMemoIdx >= 0 ? '✅ 已更新到云端' : '✅ 已保存到云端';
+    msgEl.style.color = 'var(--green)';
     document.getElementById(type + 'Content').value = '';
+    document.getElementById(type + 'Date').value = defaultDate();
+    _editingMemoIdx = -1;
     renderMemoHistory(storeName);
     renderSchedule(); renderCalendar(); renderStoreList();
     showToast('✅ 已同步');
   } else {
     msgEl.textContent = '❌ 保存失败'; msgEl.style.color = 'var(--red)';
   }
+}
+
+// ── 编辑记录：回填到表单 ──
+function editMemo(idx) {
+  const r = _records[idx];
+  if (!r) return;
+  _editingMemoIdx = idx;
+  
+  // 切到对应 tab
+  const storeName = r.store;
+  const tab = r.type; // 'pre' 或 'post'
+  const otherTab = tab === 'pre' ? 'post' : 'pre';
+  
+  // 显示对应表单
+  document.getElementById('memo' + tab.charAt(0).toUpperCase() + tab.slice(1)).style.display = 'block';
+  document.getElementById('memo' + otherTab.charAt(0).toUpperCase() + otherTab.slice(1)).style.display = 'none';
+  document.getElementById('memoHistory').style.display = 'none';
+  
+  // 高亮对应 tab 按钮
+  document.querySelectorAll('.memo-tabs button').forEach(b => b.classList.remove('active'));
+  const btns = document.querySelectorAll('.memo-tabs button');
+  const tabIndex = tab === 'pre' ? 0 : 1;
+  if (btns[tabIndex]) btns[tabIndex].classList.add('active');
+  
+  // 回填数据
+  document.getElementById(tab + 'Date').value = r.date;
+  document.getElementById(tab + 'Status').value = r.status;
+  document.getElementById(tab + 'Content').value = r.content;
+  
+  // 改按钮文字 + 加取消按钮
+  const saveBtn = document.getElementById(tab + 'SaveBtn');
+  saveBtn.textContent = '🔄 更新' + (tab === 'pre' ? '大纲' : '纪要');
+  saveBtn.style.background = 'var(--blue)';
+  
+  const msgEl = document.getElementById(tab + 'Msg');
+  msgEl.innerHTML = '<span style="color:var(--orange);font-size:11px;">✏️ 编辑模式</span> <a href="javascript:cancelEditMode(\'' + tab + '\')" style="color:var(--t3);font-size:11px;margin-left:8px;">取消</a>';
+  
+  // 滚动到表单
+  document.getElementById('memo' + tab.charAt(0).toUpperCase() + tab.slice(1)).scrollIntoView({ behavior: 'smooth' });
+}
+
+// ── 取消编辑模式 ──
+function cancelEditMode(type) {
+  _editingMemoIdx = -1;
+  if (!type) return;
+  const saveBtn = document.getElementById(type + 'SaveBtn');
+  saveBtn.textContent = '💾 保存' + (type === 'pre' ? '大纲' : '纪要');
+  saveBtn.style.background = '';
+  const msgEl = document.getElementById(type + 'Msg');
+  msgEl.textContent = '';
+  document.getElementById(type + 'Content').value = '';
+  document.getElementById(type + 'Date').value = defaultDate();
+}
+
+function defaultDate() {
+  const d = new Date();
+  return (d.getMonth()+1) + '月' + d.getDate() + '日';
 }
 
 function renderMemoHistory(storeName) {
@@ -886,7 +961,10 @@ function renderMemoHistory(storeName) {
           <span class="h-type ${r.type}">${r.type==='pre'?'📋 会前大纲':'📝 会后纪要'}</span>
           <span style="font-size:10.5px;padding:1px 6px;border-radius:4px;margin-left:6px;${r.status==='done'?'background:rgba(0,255,136,.1);color:var(--green)':r.status==='pending'?'background:rgba(255,159,67,.12);color:var(--orange)':'background:rgba(90,106,138,.12);color:var(--t3)'}">${r.status==='done'?'✅已完成':r.status==='pending'?'⏳待复盘':'❌已取消'}</span>
         </div>
-        <button onclick="deleteMemo(${globalIdx})" style="background:none;border:none;color:var(--t3);font-size:13px;cursor:pointer;padding:2px 6px;" title="删除记录">🗑️</button>
+        <div style="display:flex;gap:2px;">
+          <button onclick="editMemo(${globalIdx})" style="background:none;border:none;color:var(--t3);font-size:13px;cursor:pointer;padding:2px 6px;" title="编辑记录">✏️</button>
+          <button onclick="deleteMemo(${globalIdx})" style="background:none;border:none;color:var(--t3);font-size:13px;cursor:pointer;padding:2px 6px;" title="删除记录">🗑️</button>
+        </div>
       </div>
       <div class="h-summary">${(r.content||'').slice(0,80)}${(r.content||'').length>80?'...':''}</div>
       <span class="h-expand" onclick="toggleFull(this)">📖 展开全文</span>
