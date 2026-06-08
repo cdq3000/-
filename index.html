@@ -8,12 +8,12 @@
 *{margin:0;padding:0;box-sizing:border-box;}
 :root{
   --bg1:#0a0e27;--bg2:#111633;--bg3:#1a1f3a;--bg4:#222845;
-  --accent:#00d4ff;--accent2:#7b2ff7;--green:#00ff88;--orange:#ff9f43;--red:#ff6b6b;--pink:#e8a0bf;
+  --accent:#00d4ff;--accent2:#7b2ff7;--green:#00ff88;--orange:#ff9f43;--red:#ff6b6b;
   --t1:#e8eaf6;--t2:#a0b0cc;--t3:#5a6a8a;
-  --rad:10px;--glow:0 0 20px rgba(0,212,255,.12);
+  --rad:10px;
 }
 html,body{height:100%;font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:var(--bg1);color:var(--t1);overflow:hidden;}
-.topbar{height:54px;background:linear-gradient(90deg,#0d1033 0%,#161b40 100%);display:flex;align-items:center;padding:0 24px;border-bottom:1px solid #1e2448;position:relative;z-index:100;}
+.topbar{height:54px;background:linear-gradient(90deg,#0d1033 0%,#161b40 100%);display:flex;align-items:center;padding:0 24px;border-bottom:1px solid #1e2448;z-index:100;position:relative;}
 .topbar .logo{font-size:18px;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
 .topbar .tabs{display:flex;gap:4px;margin-left:40px;}
 .topbar .tabs button{background:none;border:none;color:var(--t2);font-size:13.5px;padding:7px 18px;border-radius:20px;cursor:pointer;transition:.2s;font-family:inherit;}
@@ -21,104 +21,145 @@ html,body{height:100%;font-family:'Microsoft YaHei','PingFang SC',sans-serif;bac
 .topbar .tabs button.active{background:linear-gradient(135deg,rgba(0,212,255,.18),rgba(123,47,247,.18));color:var(--accent);font-weight:600;}
 .topbar .right{margin-left:auto;display:flex;align-items:center;gap:14px;font-size:12.5px;color:var(--t2);}
 .topbar .right .badge{background:var(--accent);color:#000;font-weight:700;border-radius:10px;padding:1px 8px;font-size:11px;}
-.topbar .right .sync-dot{width:8px;height:8px;border-radius:50%;background:var(--green);}
-.topbar .right .sync-dot.syncing{background:var(--orange);animation:pulse .8s infinite;}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0;}
+.sync-dot.syncing{background:var(--orange);animation:pulse .8s infinite;}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
-.main{height:calc(100% - 54px);overflow-y:auto;padding:20px 24px;}
-.main::-webkit-scrollbar{width:5px;}
-.main::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px;}
-.page{display:none;animation:fadeIn .3s;}
-.page.active{display:block;}
+.main{height:calc(100% - 54px);overflow:hidden;display:flex;}
+
+/* ── 排班总览页 ── */
+.page{display:none;flex-direction:column;width:100%;animation:fadeIn .3s;}
+.page.active{display:flex;}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
 
-.store-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;}
-.store-card{background:var(--bg2);border:1px solid #1e2744;border-radius:var(--rad);padding:18px 20px;cursor:pointer;transition:.25s;position:relative;overflow:hidden;}
-.store-card:hover{border-color:var(--accent);box-shadow:var(--glow);transform:translateY(-2px);}
-.store-card .brand-bar{position:absolute;top:0;left:0;width:4px;height:100%;border-radius:var(--rad) 0 0 var(--rad);}
-.store-card .header{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
-.store-card .name{font-size:15.5px;font-weight:700;}
-.store-card .brand-tag{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600;}
-.store-card .info-row{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--t2);margin-bottom:6px;}
-.store-card .info-row .icon{width:16px;text-align:center;}
-.store-card .status-row{display:flex;gap:8px;margin-top:12px;}
-.store-card .st-badge{font-size:11px;padding:3px 10px;border-radius:10px;font-weight:600;}
-.st-badge.done{background:rgba(0,255,136,.12);color:var(--green);}
-.st-badge.pending{background:rgba(255,159,67,.12);color:var(--orange);}
-.st-badge.none{background:rgba(90,106,138,.15);color:var(--t3);}
-.store-card .last-review{font-size:11.5px;color:var(--t3);margin-top:8px;}
+.sch-layout{display:flex;height:100%;overflow:hidden;}
+.sch-left{flex:1;overflow-y:auto;padding:18px 20px;border-right:1px solid #1e2448;}
+.sch-right{width:340px;overflow-y:auto;padding:18px 20px;background:var(--bg2);}
+.sch-left::-webkit-scrollbar,.sch-right::-webkit-scrollbar{width:4px;}
+.sch-left::-webkit-scrollbar-thumb,.sch-right::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px;}
 
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;display:none;justify-content:center;align-items:flex-start;padding-top:40px;}
-.overlay.active{display:flex;}
-.detail-panel{background:var(--bg2);border:1px solid #1e2744;border-radius:14px;width:820px;max-height:88vh;overflow-y:auto;padding:0;animation:slideUp .3s;}
-@keyframes slideUp{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:none;}}
-.detail-panel .d-header{position:sticky;top:0;background:var(--bg2);z-index:2;padding:18px 24px 14px;border-bottom:1px solid #1e2744;display:flex;align-items:center;justify-content:space-between;}
-.detail-panel .d-header .d-title{font-size:17px;font-weight:700;}
-.detail-panel .d-header .close-btn{background:none;border:1px solid #2a3055;color:var(--t2);width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;}
-.detail-panel .d-body{padding:18px 24px 24px;}
-.detail-panel .section{margin-bottom:20px;}
-.detail-panel .section-title{font-size:13.5px;font-weight:700;color:var(--accent);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #1a2240;}
+.stats-row{display:flex;gap:12px;margin-bottom:16px;}
+.stats-row .stat-card{background:var(--bg2);border:1px solid #1e2744;border-radius:var(--rad);padding:12px 16px;flex:1;text-align:center;}
+.stats-row .sc-val{font-size:24px;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.stats-row .sc-label{font-size:11.5px;color:var(--t2);margin-top:2px;}
 
-.checklist .cl-item{display:flex;align-items:flex-start;gap:8px;padding:7px 0;font-size:13px;color:var(--t1);border-bottom:1px solid rgba(255,255,255,.03);}
-.checklist .cl-item input[type=checkbox]{margin-top:2px;accent-color:var(--accent);width:15px;height:15px;flex-shrink:0;}
-.checklist .cl-item .cl-cat{font-size:10.5px;color:var(--accent2);background:rgba(123,47,247,.1);padding:1px 6px;border-radius:4px;margin-right:4px;flex-shrink:0;}
-.cl-item.checked{opacity:.45;text-decoration:line-through;}
+/* 日历 */
+.calendar{margin-bottom:16px;}
+.cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.cal-header .cal-month{font-size:16px;font-weight:700;}
+.cal-header .cal-nav{display:flex;gap:4px;}
+.cal-header .cal-nav button{background:var(--bg3);border:1px solid #2a3055;color:var(--t2);padding:4px 10px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px;}
+.cal-header .cal-nav button:hover{color:var(--accent);border-color:var(--accent);}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center;}
+.cal-grid .cal-day-header{font-size:11px;color:var(--t3);padding:4px 0;}
+.cal-grid .cal-day{padding:6px 2px;border-radius:6px;font-size:12px;cursor:pointer;position:relative;min-height:36px;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:.15s;}
+.cal-grid .cal-day:hover{background:var(--bg3);}
+.cal-grid .cal-day.today{border:1px solid var(--accent);}
+.cal-grid .cal-day.other{color:var(--t3);opacity:.4;cursor:default;}
+.cal-grid .cal-day.has-sch{background:rgba(0,212,255,.08);}
+.cal-grid .cal-day .dot-row{display:flex;gap:2px;margin-top:2px;}
+.cal-grid .cal-day .mini-dot{width:5px;height:5px;border-radius:50%;}
 
-.memo-section .memo-tabs{display:flex;gap:4px;margin-bottom:12px;}
-.memo-section .memo-tabs button{background:var(--bg3);border:1px solid #2a3055;color:var(--t2);font-size:12px;padding:5px 14px;border-radius:8px;cursor:pointer;font-family:inherit;}
-.memo-section .memo-tabs button.active{background:rgba(0,212,255,.12);border-color:var(--accent);color:var(--accent);}
-.memo-block{background:var(--bg3);border:1px solid #1e2744;border-radius:var(--rad);padding:14px;}
-.memo-block label{font-size:12px;color:var(--t2);display:block;margin-bottom:5px;}
-.memo-block input,.memo-block textarea,.memo-block select{width:100%;background:var(--bg1);border:1px solid #2a3055;color:var(--t1);border-radius:8px;padding:8px 12px;font-size:13px;font-family:inherit;outline:none;transition:.2s;}
-.memo-block input:focus,.memo-block textarea:focus,.memo-block select:focus{border-color:var(--accent);}
-.memo-block textarea{resize:vertical;min-height:100px;}
-.memo-block .row{display:flex;gap:10px;margin-bottom:10px;}
-.memo-block .row>div{flex:1;}
-.memo-block .save-btn{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;font-weight:700;border:none;padding:8px 28px;border-radius:8px;cursor:pointer;font-size:13px;font-family:inherit;margin-top:8px;transition:.2s;}
-.memo-block .save-btn:hover{opacity:.85;}
-.memo-block .save-btn:disabled{opacity:.5;cursor:not-allowed;}
-.memo-history .h-item{background:var(--bg3);border:1px solid #1e2744;border-radius:var(--rad);padding:12px 14px;margin-bottom:8px;}
-.memo-history .h-item .h-date{font-size:11.5px;color:var(--accent);font-weight:600;}
-.memo-history .h-item .h-type{font-size:10.5px;padding:1px 6px;border-radius:4px;margin-left:8px;}
+/* 门店排班卡片列表 */
+.sch-section-title{font-size:14px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.sch-section-title .add-btn{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;font-weight:700;border:none;padding:4px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit;}
+.store-cards{display:flex;flex-direction:column;gap:8px;}
+.s-card{background:var(--bg2);border:1px solid #1e2744;border-radius:var(--rad);padding:12px 16px;display:flex;align-items:center;gap:14px;transition:.2s;}
+.s-card:hover{border-color:#2a4060;}
+.s-card .s-brand{width:3px;height:36px;border-radius:2px;flex-shrink:0;}
+.s-card .s-info{flex:1;min-width:0;}
+.s-card .s-name{font-size:14px;font-weight:700;}
+.s-card .s-meta{font-size:11.5px;color:var(--t3);margin-top:2px;}
+.s-card .s-slots{display:flex;gap:4px;flex-wrap:wrap;align-items:center;}
+.s-card .s-slot{font-size:10.5px;padding:2px 8px;border-radius:4px;white-space:nowrap;display:flex;align-items:center;gap:3px;}
+.s-slot.pending{background:rgba(255,159,67,.12);color:var(--orange);}
+.s-slot.done{background:rgba(0,255,136,.1);color:var(--green);}
+.s-slot.cancelled{background:rgba(90,106,138,.12);color:var(--t3);text-decoration:line-through;}
+.s-card .s-actions{display:flex;gap:4px;align-items:center;flex-shrink:0;}
+.s-card .s-btn{background:var(--bg3);border:1px solid #2a3055;color:var(--t2);font-size:11px;padding:3px 10px;border-radius:5px;cursor:pointer;font-family:inherit;}
+.s-card .s-btn:hover{border-color:var(--accent);color:var(--accent);}
+.s-card .s-btn.primary{background:linear-gradient(135deg,rgba(0,212,255,.15),rgba(123,47,247,.15));border-color:var(--accent);color:var(--accent);font-weight:600;}
+
+/* 右侧排班详情面板 */
+.sch-right h4{font-size:14px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #1e2744;}
+.sch-right .selected-date{font-size:13px;color:var(--accent);margin-bottom:12px;font-weight:600;}
+.sch-right .date-slots{margin-bottom:14px;}
+.sch-right .ds-item{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--bg3);border-radius:8px;margin-bottom:4px;font-size:12.5px;}
+.sch-right .ds-item select{background:var(--bg1);border:1px solid #2a3055;color:var(--t2);border-radius:4px;padding:2px 6px;font-size:11px;font-family:inherit;cursor:pointer;}
+.sch-right .ds-item .ds-del{background:none;border:none;color:var(--t3);font-size:14px;cursor:pointer;}
+.sch-right .quick-add{display:flex;gap:6px;}
+.sch-right .quick-add input{flex:1;background:var(--bg1);border:1px solid #2a3055;color:var(--t1);border-radius:6px;padding:6px 10px;font-size:12px;font-family:inherit;outline:none;}
+.sch-right .quick-add input:focus{border-color:var(--accent);}
+.sch-right .quick-add button{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;font-weight:700;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit;}
+
+/* ── 复盘详情页 ── */
+.review-layout{display:flex;height:100%;overflow:hidden;}
+.review-sidebar{width:260px;background:var(--bg2);border-right:1px solid #1e2744;overflow-y:auto;padding:16px;}
+.review-sidebar::-webkit-scrollbar{width:4px;}
+.review-sidebar::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px;}
+.review-sidebar h4{font-size:13px;margin-bottom:10px;color:var(--t2);}
+.review-sidebar .search-box{width:100%;background:var(--bg1);border:1px solid #2a3055;color:var(--t1);border-radius:8px;padding:7px 10px;font-size:12px;font-family:inherit;outline:none;margin-bottom:10px;}
+.review-sidebar .search-box:focus{border-color:var(--accent);}
+.review-sidebar .store-item{padding:10px 12px;border-radius:8px;cursor:pointer;font-size:13px;transition:.15s;margin-bottom:3px;display:flex;align-items:center;gap:8px;}
+.review-sidebar .store-item:hover{background:var(--bg3);}
+.review-sidebar .store-item.active{background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.25);}
+.review-sidebar .store-item .si-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.review-main{flex:1;overflow-y:auto;padding:20px 24px;}
+.review-main::-webkit-scrollbar{width:4px;}
+.review-main::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px;}
+
+.review-main .r-header{display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #1e2744;}
+.review-main .r-header .r-title{font-size:18px;font-weight:700;}
+.review-main .r-header .r-tag{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600;}
+.review-main .r-header .r-edit{background:var(--bg3);border:1px solid #2a3055;color:var(--t2);font-size:11px;padding:4px 12px;border-radius:6px;cursor:pointer;font-family:inherit;margin-left:auto;}
+.review-main .r-header .r-edit:hover{border-color:var(--accent);color:var(--accent);}
+
+.r-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;font-size:13px;color:var(--t2);margin-bottom:20px;}
+.r-info-grid b{color:var(--t1);}
+
+.memo-tabs{display:flex;gap:4px;margin-bottom:14px;}
+.memo-tabs button{background:var(--bg3);border:1px solid #2a3055;color:var(--t2);font-size:12.5px;padding:6px 16px;border-radius:8px;cursor:pointer;font-family:inherit;}
+.memo-tabs button.active{background:rgba(0,212,255,.12);border-color:var(--accent);color:var(--accent);}
+.memo-form{background:var(--bg3);border:1px solid #1e2744;border-radius:var(--rad);padding:16px;}
+.memo-form .row{display:flex;gap:10px;margin-bottom:10px;}
+.memo-form .row>div{flex:1;}
+.memo-form label{font-size:12px;color:var(--t2);display:block;margin-bottom:4px;font-weight:600;}
+.memo-form input,.memo-form textarea,.memo-form select{width:100%;background:var(--bg1);border:1px solid #2a3055;color:var(--t1);border-radius:8px;padding:8px 12px;font-size:13px;font-family:inherit;outline:none;transition:.2s;}
+.memo-form input:focus,.memo-form textarea:focus,.memo-form select:focus{border-color:var(--accent);}
+.memo-form textarea{resize:vertical;min-height:120px;}
+.memo-form .save-btn{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;font-weight:700;border:none;padding:8px 28px;border-radius:8px;cursor:pointer;font-size:13px;font-family:inherit;transition:.2s;}
+.memo-form .save-btn:hover{opacity:.85;}
+.memo-form .save-btn:disabled{opacity:.5;cursor:not-allowed;}
+.memo-form .msg{font-size:12.5px;margin-left:10px;}
+
+.history-list{margin-top:14px;}
+.h-item{background:var(--bg3);border:1px solid #1e2744;border-radius:var(--rad);padding:12px 14px;margin-bottom:8px;}
+.h-item .h-date{font-size:11.5px;color:var(--accent);font-weight:600;}
+.h-item .h-type{font-size:10.5px;padding:1px 6px;border-radius:4px;margin-left:8px;}
 .h-type.pre{background:rgba(123,47,247,.12);color:var(--accent2);}
 .h-type.post{background:rgba(0,255,136,.1);color:var(--green);}
-.memo-history .h-item .h-summary{font-size:12.5px;color:var(--t2);margin-top:5px;line-height:1.5;}
-.memo-history .h-item .h-expand{font-size:12px;color:var(--accent);cursor:pointer;margin-top:5px;display:inline-block;}
-.memo-history .h-item .h-full{font-size:12.5px;color:var(--t1);margin-top:7px;line-height:1.6;display:none;white-space:pre-wrap;}
+.h-item .h-summary{font-size:12.5px;color:var(--t2);margin-top:5px;line-height:1.5;}
+.h-item .h-expand{font-size:12px;color:var(--accent);cursor:pointer;margin-top:5px;display:inline-block;}
+.h-item .h-full{font-size:12.5px;color:var(--t1);margin-top:7px;line-height:1.6;display:none;white-space:pre-wrap;}
 
-.record-filter{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
-.record-filter select,.record-filter input{background:var(--bg3);border:1px solid #2a3055;color:var(--t1);border-radius:8px;padding:6px 12px;font-size:12.5px;font-family:inherit;}
-.record-filter select:focus,.record-filter input:focus{border-color:var(--accent);outline:none;}
-.record-list .r-item{background:var(--bg2);border:1px solid #1e2744;border-radius:var(--rad);padding:14px 18px;margin-bottom:10px;display:flex;align-items:flex-start;gap:14px;transition:.2s;}
-.record-list .r-item:hover{border-color:#2a4060;}
-.r-item .r-dot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0;}
-.r-item .r-info{flex:1;}
-.r-item .r-info .r-title{font-size:14px;font-weight:600;margin-bottom:3px;}
-.r-item .r-info .r-meta{font-size:11.5px;color:var(--t3);}
-.r-item .r-info .r-snippet{font-size:12.5px;color:var(--t2);margin-top:5px;line-height:1.5;}
-.r-item .r-badge{font-size:11px;padding:2px 10px;border-radius:10px;flex-shrink:0;font-weight:600;}
-.r-item .r-actions{display:flex;gap:5px;flex-shrink:0;}
-.r-item .btn-sm{background:none;border:1px solid #2a3055;color:var(--t2);font-size:11px;padding:3px 10px;border-radius:6px;cursor:pointer;font-family:inherit;}
-.r-item .btn-sm:hover{border-color:var(--accent);color:var(--accent);}
+.empty-state{text-align:center;padding:60px 20px;color:var(--t3);}
+.empty-state .icon{font-size:40px;margin-bottom:10px;opacity:.3;}
 
-.feed-section{background:var(--bg2);border:1px solid #1e2744;border-radius:12px;padding:20px;}
-.feed-section .f-row{display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
-.feed-section .f-row>div{flex:1;min-width:180px;}
-.feed-section label{font-size:12px;color:var(--t2);display:block;margin-bottom:5px;font-weight:600;}
-.feed-section select,.feed-section input,.feed-section textarea{width:100%;background:var(--bg3);border:1px solid #2a3055;color:var(--t1);border-radius:8px;padding:8px 12px;font-size:13px;font-family:inherit;outline:none;transition:.2s;}
-.feed-section select:focus,.feed-section input:focus,.feed-section textarea:focus{border-color:var(--accent);}
-.feed-section textarea{resize:vertical;min-height:160px;}
-.feed-section .parse-btn{background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff;font-weight:700;border:none;padding:9px 32px;border-radius:8px;cursor:pointer;font-size:13px;font-family:inherit;transition:.2s;}
-.feed-section .parse-btn:hover{opacity:.85;}
-.feed-section .parse-btn:disabled{opacity:.5;cursor:not-allowed;}
-.feed-section .hint{font-size:11.5px;color:var(--t3);margin-top:8px;line-height:1.6;}
-
-.empty{text-align:center;padding:50px 20px;color:var(--t3);font-size:13.5px;}
-.empty .icon{font-size:36px;margin-bottom:10px;opacity:.4;}
-
-.stats-row{display:flex;gap:14px;margin-bottom:18px;}
-.stats-row .stat-card{background:var(--bg2);border:1px solid #1e2744;border-radius:var(--rad);padding:12px 18px;flex:1;}
-.stats-row .stat-card .sc-val{font-size:22px;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
-.stats-row .stat-card .sc-label{font-size:11.5px;color:var(--t2);margin-top:2px;}
+/* 弹窗 */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:500;display:none;justify-content:center;align-items:center;}
+.overlay.active{display:flex;}
+.dialog{background:var(--bg2);border:1px solid #1e2744;border-radius:14px;width:500px;padding:24px;animation:slideUp .3s;}
+@keyframes slideUp{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:none;}}
+.dialog h3{font-size:16px;margin-bottom:16px;}
+.dialog .form-row{margin-bottom:14px;}
+.dialog .form-row label{font-size:12px;color:var(--t2);display:block;margin-bottom:4px;font-weight:600;}
+.dialog .form-row input,.dialog .form-row select{width:100%;background:var(--bg1);border:1px solid #2a3055;color:var(--t1);border-radius:8px;padding:8px 12px;font-size:13px;font-family:inherit;outline:none;}
+.dialog .form-row input:focus,.dialog .form-row select:focus{border-color:var(--accent);}
+.dialog .form-row .hint{font-size:11px;color:var(--t3);margin-top:3px;}
+.dialog .btn-row{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;}
+.dialog .btn-row button{padding:8px 20px;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit;border:none;}
+.dialog .btn-save{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;font-weight:700;}
+.dialog .btn-danger{background:var(--red);color:#fff;font-weight:700;}
+.dialog .btn-cancel{background:var(--bg3);border:1px solid #2a3055;color:var(--t2);}
 
 .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--green);color:#000;font-weight:700;padding:10px 24px;border-radius:20px;font-size:13px;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;}
 .toast.error{background:var(--red);color:#fff;}
@@ -146,107 +187,89 @@ html,body{height:100%;font-family:'Microsoft YaHei','PingFang SC',sans-serif;bac
 <div class="topbar">
   <div class="logo">骏延集团 · 陪跑复盘管理</div>
   <div class="tabs">
-    <button class="active" onclick="switchTab('stores')">🏪 门店列表</button>
-    <button onclick="switchTab('schedule')">📅 排班日历</button>
-    <button onclick="switchTab('records')">📝 复盘记录</button>
-    <button onclick="switchTab('feed')">📥 投喂纪要</button>
+    <button class="active" onclick="switchTab('schedule')">📅 排班总览</button>
+    <button onclick="switchTab('review')">📝 复盘详情</button>
   </div>
   <div class="right">
     <span id="syncLabel">同步中...</span>
     <span class="sync-dot" id="syncDot"></span>
-    <span>本月复盘 <span class="badge" id="headerCount">0/7</span></span>
-    <span id="headerDate"></span>
-    <button onclick="showTokenDialog()" style="background:var(--bg3);border:1px solid #2a3055;color:var(--t2);font-size:11px;padding:3px 10px;border-radius:6px;cursor:pointer;font-family:inherit;" title="设置 GitHub Token">🔑 设置Token</button>
+    <span>本月复盘 <span class="badge" id="headerCount">0/0</span></span>
+    <button onclick="showTokenDialog()" style="background:var(--bg3);border:1px solid #2a3055;color:var(--t2);font-size:11px;padding:3px 10px;border-radius:6px;cursor:pointer;font-family:inherit;">🔑 设置Token</button>
   </div>
 </div>
 
 <div class="main">
-  <!-- 门店列表页 -->
-  <div class="page active" id="pageStores">
-    <div class="stats-row">
-      <div class="stat-card"><div class="sc-val" id="stTotal">7</div><div class="sc-label">陪跑门店</div></div>
-      <div class="stat-card"><div class="sc-val" id="stDone">0</div><div class="sc-label">本月已复盘</div></div>
-      <div class="stat-card"><div class="sc-val" id="stPending">0</div><div class="sc-label">待复盘</div></div>
-      <div class="stat-card"><div class="sc-val" id="stRate">0%</div><div class="sc-label">复盘完成率</div></div>
-    </div>
-    <div class="store-grid" id="storeGrid"></div>
-  </div>
 
-  <!-- 排班日历页 -->
-  <div class="page" id="pageSchedule">
-    <div class="stats-row">
-      <div class="stat-card"><div class="sc-val" id="schTotal">7</div><div class="sc-label">已排班门店</div></div>
-      <div class="stat-card"><div class="sc-val" id="schThisMonth">0</div><div class="sc-label">本月排班次数</div></div>
-      <div class="stat-card"><div class="sc-val" id="schNext">0</div><div class="sc-label">本月已完成</div></div>
-    </div>
-    <div class="schedule-intro" style="margin-bottom:14px;color:var(--t2);font-size:12.5px;">
-      💡 直接在卡片下方输入预约日期，点"✅ 预约"立即保存到云端。可随时修改状态。
-    </div>
-    <div class="store-grid" id="scheduleGrid"></div>
-  </div>
+<!-- ═══════════════════ 排班总览 ═══════════════════ -->
+<div class="page active" id="pageSchedule">
+  <div class="sch-layout">
+    <div class="sch-left">
+      <!-- 统计卡片 -->
+      <div class="stats-row">
+        <div class="stat-card"><div class="sc-val" id="stTotal">0</div><div class="sc-label">陪跑门店</div></div>
+        <div class="stat-card"><div class="sc-val" id="stScheduled">0</div><div class="sc-label">本月排班次数</div></div>
+        <div class="stat-card"><div class="sc-val" id="stDone">0</div><div class="sc-label">本月已完成</div></div>
+        <div class="stat-card"><div class="sc-val" id="stRate">0%</div><div class="sc-label">完成率</div></div>
+      </div>
 
-  <!-- 复盘记录页 -->
-  <div class="page" id="pageRecords">
-    <div class="record-filter">
-      <div><label>筛选门店</label><select id="filterStore" onchange="renderRecords()"><option value="">全部门店</option></select></div>
-      <div><label>类型</label><select id="filterType" onchange="renderRecords()"><option value="">全部</option><option value="pre">会前大纲</option><option value="post">会后纪要</option></select></div>
-      <div><label>月份</label><input type="month" id="filterMonth" onchange="renderRecords()"></div>
-    </div>
-    <div class="record-list" id="recordList"></div>
-  </div>
+      <!-- 日历 -->
+      <div class="calendar">
+        <div class="cal-header">
+          <span class="cal-month" id="calMonth">—</span>
+          <div class="cal-nav">
+            <button onclick="calShift(-1)">◀</button>
+            <button onclick="calToday()">今天</button>
+            <button onclick="calShift(1)">▶</button>
+          </div>
+        </div>
+        <div class="cal-grid" id="calGrid"></div>
+      </div>
 
-  <!-- 投喂纪要页 -->
-  <div class="page" id="pageFeed">
-    <div class="feed-section">
-      <h3 style="margin-bottom:14px;font-size:15px;">📥 粘贴会议纪要，自动归档到云端</h3>
-      <div class="f-row">
-        <div><label>门店 *</label><select id="feedStore"></select></div>
-        <div><label>日期 *</label><input type="text" id="feedDate" placeholder="如：6月11日"></div>
-        <div><label>类型 *</label><select id="feedType"><option value="pre">会前大纲</option><option value="post">会后纪要</option></select></div>
+      <!-- 门店排班列表 -->
+      <div class="sch-section-title">
+        📋 门店排班
+        <button class="add-btn" onclick="showStoreDialog()">+ 新增门店</button>
       </div>
-      <div style="margin-bottom:14px;">
-        <label>会议纪要内容</label>
-        <textarea id="feedContent" placeholder="在此粘贴会议纪要内容..."></textarea>
-      </div>
-      <div style="display:flex;gap:10px;align-items:center;">
-        <button class="parse-btn" onclick="saveFeed()">📌 保存纪要</button>
-        <span id="feedMsg" style="font-size:12.5px;"></span>
-      </div>
+      <div class="store-cards" id="storeCards"></div>
+    </div>
+
+    <!-- 右侧面板 -->
+    <div class="sch-right" id="schRight">
+      <h4>📌 点击日历日期查看排班详情</h4>
+      <div id="schRightContent" class="empty-state"><div class="icon">📅</div>选择日期查看</div>
     </div>
   </div>
 </div>
 
-<!-- 门店详情弹层 -->
-<div class="overlay" id="overlay">
-  <div class="detail-panel">
-    <div class="d-header">
-      <div class="d-title" id="dTitle">—</div>
-      <button class="close-btn" onclick="closeDetail()">✕</button>
+<!-- ═══════════════════ 复盘详情 ═══════════════════ -->
+<div class="page" id="pageReview">
+  <div class="review-layout">
+    <div class="review-sidebar">
+      <h4>🏪 门店列表</h4>
+      <input class="search-box" id="storeSearch" placeholder="搜索门店..." oninput="renderStoreList()">
+      <div id="storeList"></div>
     </div>
-    <div class="d-body">
-      <div class="section"><div class="section-title">📋 基本信息</div><div id="dInfo" style="font-size:13px;color:var(--t2);line-height:1.8;"></div></div>
-      <div class="section"><div class="section-title">✅ 本周点检清单</div><div class="checklist" id="dChecklist"></div></div>
-      <div class="section memo-section">
-        <div class="section-title">📝 复盘纪要</div>
-        <div class="memo-tabs">
-          <button class="active" onclick="switchMemoTab('pre',this)">📋 会前大纲</button>
-          <button onclick="switchMemoTab('post',this)">📝 会后纪要</button>
-          <button onclick="switchMemoTab('history',this)">📂 历史记录</button>
-        </div>
-        <div class="memo-block" id="memoPre">
-          <div class="row"><div><label>日期（自由填写）</label><input type="text" id="preDate" placeholder="如：6月11日"></div><div><label>状态</label><select id="preStatus"><option value="pending">⏳ 待复盘</option><option value="done">✅ 已完成</option><option value="cancelled">❌ 已取消</option></select></div></div>
-          <div style="margin-bottom:10px;"><label>大纲内容</label><textarea id="preContent" placeholder="例：1. 上周直播数据回顾 2. 短视频发布情况 3. 线索跟进检查..."></textarea></div>
-          <button class="save-btn" id="preSaveBtn" onclick="savePreMemo()">💾 保存大纲</button>
-          <span id="preMsg" style="font-size:12.5px;margin-left:10px;"></span>
-        </div>
-        <div class="memo-block" id="memoPost" style="display:none;">
-          <div class="row"><div><label>日期（自由填写）</label><input type="text" id="postDate" placeholder="如：6月11日"></div><div><label>状态</label><select id="postStatus"><option value="done">✅ 已完成</option><option value="pending">⏳ 待复盘</option><option value="cancelled">❌ 已取消</option></select></div></div>
-          <div style="margin-bottom:10px;"><label>会议纪要</label><textarea id="postContent" placeholder="【复盘结论】...【发现问题】...【待办事项】..."></textarea></div>
-          <button class="save-btn" id="postSaveBtn" onclick="savePostMemo()">💾 保存纪要</button>
-          <span id="postMsg" style="font-size:12.5px;margin-left:10px;"></span>
-        </div>
-        <div class="memo-history" id="memoHistory" style="display:none;"></div>
-      </div>
+    <div class="review-main" id="reviewMain">
+      <div class="empty-state"><div class="icon">📝</div>选择门店查看复盘详情</div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- 门店新增/编辑弹窗 -->
+<div class="overlay" id="storeOverlay">
+  <div class="dialog">
+    <h3 id="storeDlgTitle">新增门店</h3>
+    <div class="form-row"><label>门店名称 *</label><input id="storeName" placeholder="如：花都广本"></div>
+    <div class="form-row"><label>品牌 *</label><select id="storeBrand"><option value="广本">广本</option><option value="零跑">零跑</option><option value="极氪">极氪</option><option value="传祺">传祺</option><option value="其他">其他</option></select></div>
+    <div class="form-row"><label>固定复盘日</label><select id="storeDay"><option value="周一">周一</option><option value="周二">周二</option><option value="周三">周三</option><option value="周四">周四</option><option value="周五">周五</option></select></div>
+    <div class="form-row"><label>负责老师</label><input id="storeTeachers" placeholder="如：陈达强+娇娇+小樊"></div>
+    <div class="form-row"><label>品牌自定义颜色</label><input id="storeColor" placeholder="默认自动匹配品牌色"><span class="hint">选填，如 #ff6b6b</span></div>
+    <div class="btn-row">
+      <button class="btn-danger" id="storeDeleteBtn" style="display:none" onclick="deleteStore()">删除门店</button>
+      <button class="btn-cancel" onclick="closeStoreDialog()">取消</button>
+      <button class="btn-save" onclick="saveStore()">保存</button>
     </div>
   </div>
 </div>
@@ -254,11 +277,11 @@ html,body{height:100%;font-family:'Microsoft YaHei','PingFang SC',sans-serif;bac
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
-<!-- Token 配置弹窗 -->
+<!-- Token 弹窗 -->
 <div class="token-overlay" id="tokenOverlay">
   <div class="token-dialog">
     <h3>🔑 GitHub Token 配置</h3>
-    <p>写入数据需要 GitHub Token（读取不需要）。Token 仅保存在你的浏览器中，不会上传到任何地方。<br>去 <a href="https://github.com/settings/tokens" target="_blank" style="color:var(--accent);">github.com/settings/tokens</a> 生成，勾选 <b>gist</b> 权限即可。</p>
+    <p>写入数据需要 Token。Token 仅保存在你的浏览器中。<br>去 <a href="https://github.com/settings/tokens" target="_blank" style="color:var(--accent);">github.com/settings/tokens</a> 生成 Classic Token，勾选 <b>gist</b> 权限。</p>
     <div class="status" id="tokenStatus"></div>
     <input type="password" id="tokenInput" placeholder="粘贴 Token...">
     <div class="btn-row">
@@ -271,31 +294,44 @@ html,body{height:100%;font-family:'Microsoft YaHei','PingFang SC',sans-serif;bac
 
 <script>
 // ═══════════════════════════════════════════
-//  GitHub Gist API 数据层
+//  数据层
 // ═══════════════════════════════════════════
 const GIST_ID = '69495eeba22b7ec386e6663e5dd6fb0b';
 const GIST_FILENAME = 'peipao-data.json';
 const GIST_RAW = 'https://gist.githubusercontent.com/cdq3000/' + GIST_ID + '/raw/' + GIST_FILENAME;
 const API_BASE = 'https://api.github.com/gists/' + GIST_ID;
 
-// Token 从 localStorage 读取，不在代码里写死
 function getToken() { return localStorage.getItem('gist_token') || ''; }
 function setToken(t) { localStorage.setItem('gist_token', t); }
-
 function authHeaders() {
   const t = getToken();
-  return t ? {
-    'Authorization': 'Bearer ' + t,
-    'Accept': 'application/vnd.github+json',
-    'X-GitHub-Api-Version': '2022-11-28'
-  } : null;
+  return t ? { 'Authorization':'Bearer '+t, 'Accept':'application/vnd.github+json', 'X-GitHub-Api-Version':'2022-11-28' } : null;
 }
 
-// 本地内存缓存
+// 全局状态
+let _stores = [];
 let _schedule = {};
 let _records = [];
 let _lastUpdated = '';
+let _gistEtag = '';  // 用于 Gist API 缓存控制
 
+// 默认品牌色
+const BRAND_COLORS = { '广本':'#00d4ff', '零跑':'#7b2ff7', '极氪':'#00ff88', '传祺':'#ff6b35', '其他':'#ff9f43' };
+
+// 默认7家门店（首次初始化用）
+const DEFAULT_STORES = [
+  {name:'清远极氪',brand:'极氪',day:'周四',teachers:'何志超+娇娇+小樊',color:''},
+  {name:'花都传祺',brand:'传祺',day:'周五',teachers:'罗霞霜+娇娇+小樊',color:''},
+  {name:'花都广本',brand:'广本',day:'周二',teachers:'陈达强+娇娇+小樊',color:''},
+  {name:'汕头广本',brand:'广本',day:'周二',teachers:'陈达强+娇娇+小樊',color:''},
+  {name:'白云零跑',brand:'零跑',day:'周三',teachers:'陈家威+娇娇+小樊',color:''},
+  {name:'花都零跑',brand:'零跑',day:'周三',teachers:'黄姚瑶+娇娇+小樊',color:''},
+  {name:'清远广本',brand:'广本',day:'周二',teachers:'何志超+娇娇+小樊',color:''},
+];
+
+function getStoreColor(s) { return s.color || BRAND_COLORS[s.brand] || '#00d4ff'; }
+
+// ── 同步状态 ──
 function setSyncStatus(status) {
   const dot = document.getElementById('syncDot');
   const label = document.getElementById('syncLabel');
@@ -306,14 +342,31 @@ function setSyncStatus(status) {
   else label.textContent = '离线';
 }
 
-// 从 Gist 读取数据（公开 Gist，无需 Token）
+function showToast(msg, isError) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast' + (isError ? ' error' : '');
+  setTimeout(() => t.classList.add('show'), 10);
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── 读取 Gist（用 API 避免 CDN 缓存，带 ETag） ──
 async function fetchFromGist() {
   setSyncStatus('syncing');
   try {
-    // 用 raw URL 读取，无需认证
-    const resp = await fetch(GIST_RAW + '?t=' + Date.now());
+    const h = authHeaders() || { 'Accept':'application/vnd.github+json', 'X-GitHub-Api-Version':'2022-11-28' };
+    if (_gistEtag) h['If-None-Match'] = _gistEtag;
+    const resp = await fetch(API_BASE, { headers: h });
+    if (resp.status === 304) {
+      setSyncStatus(getToken() ? 'ok' : 'no_token');
+      return true; // 没变化
+    }
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const data = await resp.json();
+    _gistEtag = resp.headers.get('ETag') || '';
+    const gist = await resp.json();
+    const file = gist.files[GIST_FILENAME];
+    if (!file || !file.content) throw new Error('No data');
+    const data = JSON.parse(file.content);
+    _stores = data.stores && data.stores.length > 0 ? data.stores : [...DEFAULT_STORES];
     _schedule = data.schedule || {};
     _records = data.records || [];
     _lastUpdated = data.lastUpdated || '';
@@ -321,27 +374,31 @@ async function fetchFromGist() {
     return true;
   } catch (e) {
     console.error('Fetch failed:', e);
+    // 降级：用 raw URL 读
+    try {
+      const resp = await fetch(GIST_RAW + '?t=' + Date.now());
+      if (resp.ok) {
+        const data = await resp.json();
+        _stores = data.stores && data.stores.length > 0 ? data.stores : [...DEFAULT_STORES];
+        _schedule = data.schedule || {};
+        _records = data.records || [];
+        _lastUpdated = data.lastUpdated || '';
+        setSyncStatus(getToken() ? 'ok' : 'no_token');
+        return true;
+      }
+    } catch(e2) {}
     setSyncStatus('error');
     showToast('⚠️ 数据加载失败，请检查网络', true);
     return false;
   }
 }
 
-// 写回 Gist（需要 Token）
+// ── 写入 Gist ──
 async function pushToGist() {
-  if (!getToken()) {
-    showToast('⚠️ 请先点击右上角"设置Token"', true);
-    return false;
-  }
+  if (!getToken()) { showToast('⚠️ 请先配置 Token', true); return false; }
   setSyncStatus('syncing');
-  const data = {
-    schedule: _schedule,
-    records: _records,
-    lastUpdated: new Date().toISOString()
-  };
-  const body = JSON.stringify({
-    files: { [GIST_FILENAME]: { content: JSON.stringify(data) } }
-  });
+  const data = { stores: _stores, schedule: _schedule, records: _records, lastUpdated: new Date().toISOString() };
+  const body = JSON.stringify({ files: { [GIST_FILENAME]: { content: JSON.stringify(data) } } });
   try {
     const resp = await fetch(API_BASE, {
       method: 'PATCH',
@@ -350,6 +407,8 @@ async function pushToGist() {
     });
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     _lastUpdated = data.lastUpdated;
+    // 更新 ETag 避免后续 304 返回旧数据
+    _gistEtag = resp.headers.get('ETag') || '';
     setSyncStatus('ok');
     return true;
   } catch (e) {
@@ -360,233 +419,451 @@ async function pushToGist() {
   }
 }
 
-// 静默刷新（定时同步，读数据不需要 Token）
+// ── 静默刷新 ──
 async function silentRefresh() {
   try {
-    const resp = await fetch(GIST_RAW + '?t=' + Date.now());
+    const h = authHeaders() || { 'Accept':'application/vnd.github+json', 'X-GitHub-Api-Version':'2022-11-28' };
+    if (_gistEtag) h['If-None-Match'] = _gistEtag;
+    const resp = await fetch(API_BASE, { headers: h });
+    if (resp.status === 304) return;
     if (!resp.ok) return;
-    const data = await resp.json();
+    _gistEtag = resp.headers.get('ETag') || '';
+    const gist = await resp.json();
+    const data = JSON.parse(gist.files[GIST_FILENAME].content);
     if (data.lastUpdated !== _lastUpdated) {
+      _stores = data.stores && data.stores.length > 0 ? data.stores : _stores;
       _schedule = data.schedule || {};
       _records = data.records || [];
       _lastUpdated = data.lastUpdated || '';
-      refreshUI();
+      refreshAll();
     }
     setSyncStatus(getToken() ? 'ok' : 'no_token');
   } catch (e) { /* silent */ }
 }
 
-// Toast
-function showToast(msg, isError) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'toast' + (isError ? ' error' : '');
-  setTimeout(() => t.classList.add('show'), 10);
-  setTimeout(() => t.classList.remove('show'), 2500);
+function refreshAll() {
+  if (document.getElementById('pageSchedule').classList.contains('active')) { renderSchedule(); renderCalendar(); }
+  if (document.getElementById('pageReview').classList.contains('active')) renderStoreList();
+  updateHeaderStats();
 }
 
-// 全量刷新 UI
-function refreshUI() {
-  if (document.getElementById('pageStores').classList.contains('active')) renderStores();
-  if (document.getElementById('pageSchedule').classList.contains('active')) renderSchedule();
-  if (document.getElementById('pageRecords').classList.contains('active')) renderRecords();
-  // 更新 header 统计
-  const curMonth = new Date().toISOString().slice(0,7);
-  let doneCnt = 0;
-  STORES.forEach(s => {
-    const storeRecs = _records.filter(r => r.store === s.name && r.date && r.date.startsWith(curMonth));
-    if (storeRecs.some(r => r.status === 'done')) doneCnt++;
+function updateHeaderStats() {
+  const m = calYear + '-' + String(calMonth).padStart(2,'0');
+  let done = 0, total = 0;
+  _stores.forEach(s => {
+    const slots = (_schedule[s.name] || []).filter(sl => (sl.date||'').startsWith(m));
+    total += slots.length;
+    if (slots.some(sl => sl.status === 'done')) done++;
   });
-  document.getElementById('headerCount').textContent = doneCnt + '/' + STORES.length;
+  document.getElementById('headerCount').textContent = done + '/' + _stores.length;
 }
 
 // ═══════════════════════════════════════════
-//  业务数据
+//  日历
 // ═══════════════════════════════════════════
-const BRANDS = {
-  '广本':{color:'#00d4ff',bg:'rgba(0,212,255,.1)'},
-  '零跑':{color:'#7b2ff7',bg:'rgba(123,47,247,.1)'},
-  '极氪':{color:'#00ff88',bg:'rgba(0,255,136,.1)'},
-  '传祺':{color:'#ff6b35',bg:'rgba(255,107,53,.1)'},
-};
+let calYear, calMonth;
 
-const STORES = [
-  {name:'清远极氪',brand:'极氪',day:'周四',teachers:'何志超+娇娇+小樊',
-   daily:['直播大屏数据简评','短视频数据总结（播放/互动/留资）','线索跟进确认（新增线索是否联系/重点客户表更新）'],
-   weekly:{'直播端':['主播状态、话术内容细节点评','本周目标达成规划','一周主播问题解答'],'短视频端':['本周发布频次与数量是否达标','抽检点评爆款/低效视频原因分析','下周选题方向与拍摄计划确认'],'后链路':['本周直播+短视频新增线索总量','线索首次联系及时率（目标：10分钟内）','线索跟进阶段分布（战败/意向/预约/到店/成交）','未转化线索原因归类与处置建议'],'其他':['问题答疑']}},
-  {name:'花都传祺',brand:'传祺',day:'周五',teachers:'罗霞霜+娇娇+小樊',
-   daily:['直播大屏数据简评','短视频拍摄和数据总结（播放/互动/留资）','线索跟进台账发送群内','每日数据汇总发送群内'],
-   weekly:{'短视频':['本周已发视频数据（条数/点赞/评论/加微）','拍摄完成度','抽检点评爆款/低效视频原因分析','调整下周选题或发布节奏'],'直播':['本周直播场次/本周付费投流线索量','主播状态、话术内容细节点评','一周主播问题解答'],'后链路':['本周直播+短视频新增线索总量','本周新线索接通率/目标：接通率≥70%','本周邀约到店人数/线索跟进阶段分布','重点线索二次跟进情况','未转化线索原因归类与处置建议'],'其他':['下周目标和重点动作规划','问题答疑']}},
-  {name:'花都广本',brand:'广本',day:'周二',teachers:'陈达强+娇娇+小樊',daily:['直播大屏数据简评','短视频数据总结','线索跟进确认'],weekly:{'直播端':['主播状态点评','本周目标达成'],'短视频端':['发布频次检查','视频分析'],'后链路':['新增线索总量','线索跟进检查']}},
-  {name:'汕头广本',brand:'广本',day:'周二',teachers:'陈达强+娇娇+小樊',daily:['直播大屏数据简评','短视频数据总结','线索跟进确认'],weekly:{'直播端':['主播状态点评','本周目标达成'],'短视频端':['发布频次检查','视频分析'],'后链路':['新增线索总量','线索跟进检查']}},
-  {name:'白云零跑',brand:'零跑',day:'周三',teachers:'陈家威+娇娇+小樊',daily:['直播大屏数据简评','短视频数据总结','线索跟进确认'],weekly:{'直播端':['主播状态点评','本周目标达成'],'短视频端':['发布频次检查','视频分析'],'后链路':['新增线索总量','线索跟进检查']}},
-  {name:'花都零跑',brand:'零跑',day:'周三',teachers:'黄姚瑶+娇娇+小樊',daily:['直播大屏数据简评','短视频数据总结','线索跟进确认'],weekly:{'直播端':['主播状态点评','本周目标达成'],'短视频端':['发布频次检查','视频分析'],'后链路':['新增线索总量','线索跟进检查']}},
-  {name:'清远广本',brand:'广本',day:'周二',teachers:'何志超+娇娇+小樊',daily:['直播大屏数据简评','短视频数据总结','线索跟进确认'],weekly:{'直播端':['主播状态点评','本周目标达成'],'短视频端':['发布频次检查','视频分析'],'后链路':['新增线索总量','线索跟进检查']}},
-];
-
-// ═══════════════════════════════════════════
-//  页面渲染
-// ═══════════════════════════════════════════
-function switchTab(tab) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.topbar .tabs button').forEach(b => b.classList.remove('active'));
-  const pageId = 'page' + tab.charAt(0).toUpperCase() + tab.slice(1);
-  document.getElementById(pageId).classList.add('active');
-  if (event && event.currentTarget) event.currentTarget.classList.add('active');
-  if (tab === 'schedule') renderSchedule();
-  if (tab === 'records') renderRecords();
-  if (tab === 'feed') populateFeedForm();
-}
-
-function renderStores() {
-  const grid = document.getElementById('storeGrid');
-  grid.innerHTML = '';
-  let doneCnt = 0;
-  const curMonth = new Date().toISOString().slice(0,7);
-  STORES.forEach((s, i) => {
-    const brand = BRANDS[s.brand] || BRANDS['广本'];
-    const storeRecs = _records.filter(r => r.store === s.name && r.date && r.date.startsWith(curMonth));
-    const hasDone = storeRecs.some(r => r.status === 'done');
-    const hasPending = storeRecs.some(r => r.status === 'pending');
-    let st = 'none', stLabel = '未排期';
-    if (hasDone) { st = 'done'; stLabel = '已复盘'; doneCnt++; }
-    else if (hasPending) { st = 'pending'; stLabel = '待复盘'; }
-    const lastRec = storeRecs.length > 0 ? storeRecs[storeRecs.length - 1] : null;
-    const card = document.createElement('div');
-    card.className = 'store-card';
-    card.onclick = () => openDetail(i);
-    card.innerHTML = `
-      <div class="brand-bar" style="background:${brand.color}"></div>
-      <div class="header"><span class="name">${s.name}</span><span class="brand-tag" style="background:${brand.bg};color:${brand.color}">${s.brand}</span></div>
-      <div class="info-row"><span class="icon">📅</span>每周${s.day}（时间以老师预约为准）</div>
-      <div class="info-row"><span class="icon">👩🏫</span>${s.teachers}</div>
-      <div class="info-row"><span class="icon">📋</span>每日${s.daily.length}项 / 每周${Object.keys(s.weekly).length}项点检</div>
-      <div class="status-row"><span class="st-badge ${st}">${stLabel}</span><span class="st-badge none">本月${storeRecs.length}次</span></div>
-      ${lastRec ? `<div class="last-review">最近：${lastRec.date} ${lastRec.type === 'pre' ? '会前大纲' : '会后纪要'}</div>` : ''}
-    `;
-    grid.appendChild(card);
-  });
-  document.getElementById('stDone').textContent = doneCnt;
-  document.getElementById('stPending').textContent = STORES.length - doneCnt;
-  document.getElementById('stRate').textContent = Math.round(doneCnt / STORES.length * 100) + '%';
-  document.getElementById('headerCount').textContent = doneCnt + '/' + STORES.length;
-}
-
-function openDetail(idx) {
-  const s = STORES[idx]; const brand = BRANDS[s.brand] || BRANDS['广本'];
-  document.getElementById('dTitle').textContent = s.name + ' · ' + s.brand + ' · 复盘详情';
-  const curMonth = new Date().toISOString().slice(0,7);
-  document.getElementById('dInfo').innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 20px;">
-      <div>📅 复盘日：<b>每周${s.day}</b>（时间以老师预约为准）</div>
-      <div>👩🏫 负责老师：<b>${s.teachers}</b></div>
-      <div>🏷️ 品牌：<b style="color:${brand.color}">${s.brand}</b></div>
-      <div>📊 本月复盘：<b>${_records.filter(r => r.store === s.name && r.date && r.date.startsWith(curMonth)).length}次</b></div>
-    </div>`;
-  renderChecklist(s);
+function initCalendar() {
   const now = new Date();
-  const defaultDate = `${now.getMonth() + 1}月${now.getDate()}日`;
-  document.getElementById('preDate').value = defaultDate;
-  document.getElementById('postDate').value = defaultDate;
-  document.getElementById('preContent').value = '';
-  document.getElementById('postContent').value = '';
-  document.getElementById('preMsg').textContent = '';
-  document.getElementById('postMsg').textContent = '';
-  renderMemoHistory(s.name);
-  document.getElementById('overlay').classList.add('active');
-  document.getElementById('overlay').dataset.storeIdx = idx;
+  calYear = now.getFullYear();
+  calMonth = now.getMonth() + 1;
 }
 
-function closeDetail() { document.getElementById('overlay').classList.remove('active'); }
+function calShift(delta) {
+  calMonth += delta;
+  if (calMonth > 12) { calMonth = 1; calYear++; }
+  if (calMonth < 1) { calMonth = 12; calYear--; }
+  renderCalendar();
+}
 
-function renderChecklist(s) {
-  const box = document.getElementById('dChecklist');
-  let html = '';
-  Object.entries(s.weekly).forEach(([cat, items]) => {
-    items.forEach((it, i) => {
-      html += `<div class="cl-item"><input type="checkbox" id="cb_${cat}_${i}" onchange="toggleCheck(this)"><span class="cl-cat">${cat}</span><span class="cl-label">${it}</span></div>`;
+function calToday() {
+  const now = new Date();
+  calYear = now.getFullYear();
+  calMonth = now.getMonth() + 1;
+  renderCalendar();
+}
+
+function renderCalendar() {
+  document.getElementById('calMonth').textContent = calYear + '年' + calMonth + '月';
+  const grid = document.getElementById('calGrid');
+  const today = new Date();
+  const todayStr = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+  const monthStr = calYear + '-' + String(calMonth).padStart(2, '0');
+  
+  // 当月所有排班日期集合
+  const schDates = {};
+  _stores.forEach(s => {
+    (_schedule[s.name] || []).forEach(sl => {
+      if ((sl.date||'').startsWith(monthStr)) {
+        if (!schDates[sl.date]) schDates[sl.date] = [];
+        schDates[sl.date].push({ store: s.name, status: sl.status, color: getStoreColor(s) });
+      }
     });
   });
-  html += `<div style="margin-top:10px;font-size:11.5px;color:var(--accent2);font-weight:700;">— 每日任务 —</div>`;
-  s.daily.forEach((it, i) => {
-    html += `<div class="cl-item"><input type="checkbox" id="cb_daily_${i}" onchange="toggleCheck(this)"><span class="cl-cat" style="background:rgba(0,212,255,.1);color:var(--accent);">每日</span><span class="cl-label">${it}</span></div>`;
+
+  // 日历头
+  const days = ['日','一','二','三','四','五','六'];
+  let html = days.map(d => `<div class="cal-day-header">${d}</div>`).join('');
+  
+  const firstDay = new Date(calYear, calMonth-1, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth, 0).getDate();
+  const prevDays = new Date(calYear, calMonth-1, 0).getDate();
+
+  // 上月尾巴
+  for (let i = firstDay-1; i >= 0; i--) {
+    const d = prevDays - i;
+    const prevM = calMonth === 1 ? 12 : calMonth-1;
+    const prevY = calMonth === 1 ? calYear-1 : calYear;
+    const ds = prevY+'-'+String(prevM).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    html += `<div class="cal-day other" onclick="selectDate('${ds}')">${d}</div>`;
+  }
+  
+  // 当月
+  for (let d = 1; d <= daysInMonth; d++) {
+    const ds = monthStr + '-' + String(d).padStart(2,'0');
+    let cls = 'cal-day';
+    if (ds === todayStr) cls += ' today';
+    if (schDates[ds]) cls += ' has-sch';
+    let dots = '';
+    if (schDates[ds]) {
+      const unique = [...new Map(schDates[ds].map(x => [x.store, x])).values()];
+      dots = '<div class="dot-row">' + unique.slice(0,5).map(s => {
+        const c = s.status === 'done' ? '#00ff88' : s.status === 'pending' ? '#ff9f43' : '#5a6a8a';
+        return `<span class="mini-dot" style="background:${c}" title="${s.store}"></span>`;
+      }).join('') + (unique.length > 5 ? '<span style="font-size:9px;color:var(--t3);">+</span>' : '') + '</div>';
+    }
+    html += `<div class="${cls}" onclick="selectDate('${ds}')">${d}${dots}</div>`;
+  }
+  
+  // 下月头
+  const remaining = 42 - (firstDay + daysInMonth);
+  for (let d = 1; d <= remaining; d++) {
+    html += `<div class="cal-day other">${d}</div>`;
+  }
+  
+  grid.innerHTML = html;
+  updateHeaderStats();
+}
+
+// 选中日期 → 右侧面板显示
+function selectDate(dateStr) {
+  const m = dateStr.slice(0,7);
+  const right = document.getElementById('schRightContent');
+  const slots = [];
+  _stores.forEach(s => {
+    (_schedule[s.name] || []).forEach(sl => {
+      if (sl.date === dateStr) slots.push({ ...sl, store: s.name, color: getStoreColor(s) });
+    });
   });
-  box.innerHTML = html;
+  
+  let html = `<div class="selected-date">📅 ${dateStr}</div>`;
+  if (slots.length === 0) {
+    html += '<div style="font-size:12.5px;color:var(--t3);margin-bottom:14px;">当日无排班</div>';
+  } else {
+    html += '<div class="date-slots">';
+    slots.forEach(sl => {
+      const stLabel = sl.status === 'done' ? '✅已完成' : sl.status === 'pending' ? '⏳待复盘' : '❌已取消';
+      html += `<div class="ds-item">
+        <span><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${sl.color};margin-right:6px;"></span>${sl.store}</span>
+        <div style="display:flex;gap:4px;align-items:center;">
+          <select onchange="updateSlot('${sl.store}','${sl.date}',this.value)" style="font-size:10.5px;">
+            <option value="pending" ${sl.status==='pending'?'selected':''}>⏳待复盘</option>
+            <option value="done" ${sl.status==='done'?'selected':''}>✅已完成</option>
+            <option value="cancelled" ${sl.status==='cancelled'?'selected':''}>❌已取消</option>
+          </select>
+          <button class="ds-del" onclick="deleteSlot('${sl.store}','${sl.date}')" title="删除">✕</button>
+        </div>
+      </div>`;
+    });
+    html += '</div>';
+  }
+  
+  // 快速预约
+  html += `<div style="font-size:12px;color:var(--t2);margin-bottom:6px;font-weight:600;">快速预约门店</div>
+    <div class="quick-add"><select id="quickStore" style="flex:1;background:var(--bg1);border:1px solid #2a3055;color:var(--t1);border-radius:6px;padding:6px 10px;font-size:12px;font-family:inherit;outline:none;">
+      ${_stores.map(s => `<option value="${s.name}">${s.name}</option>`).join('')}
+    </select>
+    <button onclick="quickBookDate('${dateStr}')">✅ 预约</button></div>`;
+  
+  right.innerHTML = html;
 }
 
-function toggleCheck(el) {
-  const item = el.closest('.cl-item');
-  if (el.checked) item.classList.add('checked');
-  else item.classList.remove('checked');
+async function quickBookDate(dateStr) {
+  const store = document.getElementById('quickStore').value;
+  if (!_schedule[store]) _schedule[store] = [];
+  if (_schedule[store].some(sl => sl.date === dateStr)) { showToast('该门店此日期已排班', true); return; }
+  _schedule[store].push({ date: dateStr, status: 'pending', createdAt: new Date().toISOString() });
+  if (await pushToGist()) {
+    selectDate(dateStr);
+    renderCalendar(); renderSchedule();
+    showToast('✅ 已预约');
+  }
+}
+
+async function updateSlot(store, date, status) {
+  const slots = _schedule[store] || [];
+  const sl = slots.find(s => s.date === date);
+  if (sl) sl.status = status;
+  await pushToGist();
+  selectDate(date);
+  renderCalendar(); renderSchedule();
+}
+
+async function deleteSlot(store, date) {
+  if (!confirm('删除 ' + store + ' ' + date + ' 的排班？')) return;
+  _schedule[store] = (_schedule[store] || []).filter(sl => sl.date !== date);
+  if (await pushToGist()) {
+    selectDate(date);
+    renderCalendar(); renderSchedule();
+    showToast('✅ 已删除');
+  }
 }
 
 // ═══════════════════════════════════════════
-//  纪要操作
+//  门店排班卡片列表
 // ═══════════════════════════════════════════
-function switchMemoTab(tab, btn) {
+function renderSchedule() {
+  const m = calYear + '-' + String(calMonth).padStart(2,'0');
+  const container = document.getElementById('storeCards');
+  let totalScheduled = 0, totalDone = 0;
+
+  container.innerHTML = _stores.map((s, i) => {
+    const slots = (_schedule[s.name] || []).filter(sl => (sl.date||'').startsWith(m));
+    totalScheduled += slots.length;
+    const doneCount = slots.filter(sl => sl.status === 'done').length;
+    totalDone += doneCount;
+    const color = getStoreColor(s);
+    
+    const slotsHTML = slots.length > 0
+      ? slots.map(sl => `<span class="s-slot ${sl.status}">
+          <span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:${sl.status==='done'?'#00ff88':sl.status==='pending'?'#ff9f43':'#5a6a8a'};margin-right:2px;"></span>
+          ${sl.date.slice(5)}</span>`).join('')
+      : '<span style="font-size:11px;color:var(--t3);">暂无排班</span>';
+
+    return `<div class="s-card">
+      <div class="s-brand" style="background:${color}"></div>
+      <div class="s-info">
+        <div class="s-name">${s.name} <span style="font-size:10.5px;color:${color};background:${color}15;padding:1px 6px;border-radius:4px;">${s.brand}</span></div>
+        <div class="s-meta">📅 每周${s.day} · 👩‍🏫 ${s.teachers} · ${doneCount}/${slots.length} 已完成</div>
+      </div>
+      <div class="s-slots">${slotsHTML}</div>
+      <div class="s-actions">
+        <button class="s-btn" onclick="showStoreDialog(${i})" title="编辑">✏️</button>
+        <button class="s-btn primary" onclick="goReviewStore('${s.name}')">复盘</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('stTotal').textContent = _stores.length;
+  document.getElementById('stScheduled').textContent = totalScheduled;
+  document.getElementById('stDone').textContent = totalDone;
+  document.getElementById('stRate').textContent = totalScheduled > 0 ? Math.round(totalDone / totalScheduled * 100) + '%' : '0%';
+  updateHeaderStats();
+}
+
+// ═══════════════════════════════════════════
+//  门店管理弹窗
+// ═══════════════════════════════════════════
+let _editingStoreIdx = -1;
+
+function showStoreDialog(idx) {
+  _editingStoreIdx = idx !== undefined ? idx : -1;
+  const isEdit = _editingStoreIdx >= 0;
+  document.getElementById('storeDlgTitle').textContent = isEdit ? '编辑门店' : '新增门店';
+  document.getElementById('storeDeleteBtn').style.display = isEdit ? 'inline-block' : 'none';
+  
+  if (isEdit) {
+    const s = _stores[_editingStoreIdx];
+    document.getElementById('storeName').value = s.name;
+    document.getElementById('storeBrand').value = s.brand;
+    document.getElementById('storeDay').value = s.day;
+    document.getElementById('storeTeachers').value = s.teachers;
+    document.getElementById('storeColor').value = s.color || '';
+  } else {
+    document.getElementById('storeName').value = '';
+    document.getElementById('storeBrand').value = '广本';
+    document.getElementById('storeDay').value = '周二';
+    document.getElementById('storeTeachers').value = '+娇娇+小樊';
+    document.getElementById('storeColor').value = '';
+  }
+  document.getElementById('storeOverlay').classList.add('active');
+}
+
+function closeStoreDialog() {
+  document.getElementById('storeOverlay').classList.remove('active');
+}
+
+async function saveStore() {
+  const name = document.getElementById('storeName').value.trim();
+  const brand = document.getElementById('storeBrand').value;
+  const day = document.getElementById('storeDay').value;
+  const teachers = document.getElementById('storeTeachers').value.trim();
+  const color = document.getElementById('storeColor').value.trim();
+  
+  if (!name || !teachers) { showToast('请填写门店名称和老师', true); return; }
+  
+  const storeData = { name, brand, day, teachers, color };
+  
+  if (_editingStoreIdx >= 0) {
+    const oldName = _stores[_editingStoreIdx].name;
+    _stores[_editingStoreIdx] = storeData;
+    // 如果改名了，迁移 schedule 和 records
+    if (oldName !== name) {
+      if (_schedule[oldName]) { _schedule[name] = _schedule[oldName]; delete _schedule[oldName]; }
+      _records.forEach(r => { if (r.store === oldName) r.store = name; });
+    }
+  } else {
+    _stores.push(storeData);
+  }
+  
+  if (await pushToGist()) {
+    closeStoreDialog();
+    renderSchedule(); renderCalendar(); renderStoreList();
+    showToast('✅ 门店已保存');
+  }
+}
+
+async function deleteStore() {
+  const s = _stores[_editingStoreIdx];
+  if (!confirm('确定删除「' + s.name + '」？排班和复盘记录将保留。')) return;
+  _stores.splice(_editingStoreIdx, 1);
+  if (await pushToGist()) {
+    closeStoreDialog();
+    renderSchedule(); renderCalendar(); renderStoreList();
+    showToast('✅ 门店已删除');
+  }
+}
+
+// ═══════════════════════════════════════════
+//  复盘详情页
+// ═══════════════════════════════════════════
+let _selectedReviewStore = '';
+
+function renderStoreList() {
+  const search = (document.getElementById('storeSearch').value || '').toLowerCase();
+  const container = document.getElementById('storeList');
+  const filtered = _stores.filter(s => s.name.toLowerCase().includes(search));
+  container.innerHTML = filtered.map(s => {
+    const active = s.name === _selectedReviewStore ? ' active' : '';
+    const color = getStoreColor(s);
+    const doneCount = (_records || []).filter(r => r.store === s.name && r.status === 'done').length;
+    return `<div class="store-item${active}" onclick="selectReviewStore('${s.name}')">
+      <span class="si-dot" style="background:${color}"></span>
+      <span style="flex:1;">${s.name}</span>
+      <span style="font-size:10.5px;color:var(--t3);">${doneCount}次</span>
+    </div>`;
+  }).join('');
+  if (filtered.length === 0) container.innerHTML = '<div style="font-size:12px;color:var(--t3);padding:10px;">无匹配门店</div>';
+}
+
+function selectReviewStore(name) {
+  _selectedReviewStore = name;
+  renderStoreList();
+  renderReviewDetail(name);
+}
+
+function goReviewStore(name) {
+  _selectedReviewStore = name;
+  switchTab('review');
+  renderStoreList();
+  renderReviewDetail(name);
+}
+
+function renderReviewDetail(storeName) {
+  const s = _stores.find(s => s.name === storeName);
+  if (!s) return;
+  const color = getStoreColor(s);
+  const main = document.getElementById('reviewMain');
+  const now = new Date();
+  const defaultDate = (now.getMonth()+1) + '月' + now.getDate() + '日';
+  const storeRecs = (_records || []).filter(r => r.store === storeName);
+  
+  main.innerHTML = `
+    <div class="r-header">
+      <div class="r-title">${s.name}</div>
+      <span class="r-tag" style="background:${color}15;color:${color}">${s.brand}</span>
+      <button class="r-edit" onclick="showStoreDialog(${_stores.indexOf(s)})">✏️ 编辑门店</button>
+    </div>
+    <div class="r-info-grid">
+      <div>📅 固定复盘日：<b>每周${s.day}</b></div>
+      <div>👩‍🏫 负责老师：<b>${s.teachers}</b></div>
+      <div>📊 累计复盘：<b>${storeRecs.filter(r => r.status === 'done').length}次</b></div>
+      <div>📝 记录总数：<b>${storeRecs.length}条</b></div>
+    </div>
+
+    <div class="memo-tabs">
+      <button class="active" onclick="switchMemoTab('pre',this,'${storeName}')">📋 会前大纲</button>
+      <button onclick="switchMemoTab('post',this,'${storeName}')">📝 会后纪要</button>
+      <button onclick="switchMemoTab('history',this,'${storeName}')">📂 历史记录</button>
+    </div>
+    
+    <div id="memoFormArea">
+      <div class="memo-form" id="memoPre">
+        <div class="row"><div><label>日期</label><input type="text" id="preDate" value="${defaultDate}" placeholder="如：6月11日"></div><div><label>状态</label><select id="preStatus"><option value="pending">⏳ 待复盘</option><option value="done">✅ 已完成</option><option value="cancelled">❌ 已取消</option></select></div></div>
+        <div style="margin-bottom:10px;"><label>大纲内容</label><textarea id="preContent" placeholder="例：1. 上周直播数据回顾 2. 短视频发布情况 3. 线索跟进检查..."></textarea></div>
+        <button class="save-btn" id="preSaveBtn" onclick="saveMemo('pre','${storeName}')">💾 保存大纲</button>
+        <span class="msg" id="preMsg"></span>
+      </div>
+      <div class="memo-form" id="memoPost" style="display:none;">
+        <div class="row"><div><label>日期</label><input type="text" id="postDate" value="${defaultDate}" placeholder="如：6月11日"></div><div><label>状态</label><select id="postStatus"><option value="done">✅ 已完成</option><option value="pending">⏳ 待复盘</option><option value="cancelled">❌ 已取消</option></select></div></div>
+        <div style="margin-bottom:10px;"><label>会议纪要</label><textarea id="postContent" placeholder="【复盘结论】...【发现问题】...【待办事项】..."></textarea></div>
+        <button class="save-btn" id="postSaveBtn" onclick="saveMemo('post','${storeName}')">💾 保存纪要</button>
+        <span class="msg" id="postMsg"></span>
+      </div>
+      <div class="history-list" id="memoHistory" style="display:none;"></div>
+    </div>
+  `;
+  
+  renderMemoHistory(storeName);
+}
+
+function switchMemoTab(tab, btn, storeName) {
   document.querySelectorAll('.memo-tabs button').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('memoPre').style.display = tab === 'pre' ? 'block' : 'none';
   document.getElementById('memoPost').style.display = tab === 'post' ? 'block' : 'none';
   document.getElementById('memoHistory').style.display = tab === 'history' ? 'block' : 'none';
+  if (tab === 'history') renderMemoHistory(storeName);
 }
 
-async function savePreMemo() {
-  const idx = parseInt(document.getElementById('overlay').dataset.storeIdx || '0');
-  const s = STORES[idx];
-  const date = document.getElementById('preDate').value;
-  const status = document.getElementById('preStatus').value;
-  const content = document.getElementById('preContent').value.trim();
-  if (!date || !content) { document.getElementById('preMsg').textContent = '请填写日期和内容'; document.getElementById('preMsg').style.color = 'var(--red)'; return; }
-  const btn = document.getElementById('preSaveBtn');
+async function saveMemo(type, storeName) {
+  const date = document.getElementById(type + 'Date').value;
+  const status = document.getElementById(type + 'Status').value;
+  const content = document.getElementById(type + 'Content').value.trim();
+  const msgEl = document.getElementById(type + 'Msg');
+  const btn = document.getElementById(type + 'SaveBtn');
+  
+  if (!date || !content) { msgEl.textContent = '请填写日期和内容'; msgEl.style.color = 'var(--red)'; return; }
   btn.disabled = true; btn.textContent = '保存中...';
-  _records.push({ store: s.name, date, type: 'pre', status, content, createdAt: new Date().toISOString() });
+  
+  _records.push({ store: storeName, date, type, status, content, createdAt: new Date().toISOString() });
   const ok = await pushToGist();
-  btn.disabled = false; btn.textContent = '💾 保存大纲';
+  btn.disabled = false; btn.textContent = '💾 保存' + (type === 'pre' ? '大纲' : '纪要');
+  
   if (ok) {
-    document.getElementById('preMsg').textContent = '✅ 大纲已保存到云端'; document.getElementById('preMsg').style.color = 'var(--green)';
-    document.getElementById('preContent').value = '';
-    renderMemoHistory(s.name); renderStores();
-    showToast('✅ 已同步到云端');
+    msgEl.textContent = '✅ 已保存到云端'; msgEl.style.color = 'var(--green)';
+    document.getElementById(type + 'Content').value = '';
+    renderMemoHistory(storeName);
+    renderSchedule(); renderCalendar(); renderStoreList();
+    showToast('✅ 已同步');
   } else {
-    document.getElementById('preMsg').textContent = '❌ 保存失败'; document.getElementById('preMsg').style.color = 'var(--red)';
-  }
-}
-
-async function savePostMemo() {
-  const idx = parseInt(document.getElementById('overlay').dataset.storeIdx || '0');
-  const s = STORES[idx];
-  const date = document.getElementById('postDate').value;
-  const status = document.getElementById('postStatus').value;
-  const content = document.getElementById('postContent').value.trim();
-  if (!date || !content) { document.getElementById('postMsg').textContent = '请填写日期和内容'; document.getElementById('postMsg').style.color = 'var(--red)'; return; }
-  const btn = document.getElementById('postSaveBtn');
-  btn.disabled = true; btn.textContent = '保存中...';
-  _records.push({ store: s.name, date, type: 'post', status, content, createdAt: new Date().toISOString() });
-  const ok = await pushToGist();
-  btn.disabled = false; btn.textContent = '💾 保存纪要';
-  if (ok) {
-    document.getElementById('postMsg').textContent = '✅ 纪要已保存到云端'; document.getElementById('postMsg').style.color = 'var(--green)';
-    document.getElementById('postContent').value = '';
-    renderMemoHistory(s.name); renderStores();
-    showToast('✅ 已同步到云端');
-  } else {
-    document.getElementById('postMsg').textContent = '❌ 保存失败'; document.getElementById('postMsg').style.color = 'var(--red)';
+    msgEl.textContent = '❌ 保存失败'; msgEl.style.color = 'var(--red)';
   }
 }
 
 function renderMemoHistory(storeName) {
   const box = document.getElementById('memoHistory');
-  const recs = _records.filter(r => r.store === storeName).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-  if (recs.length === 0) { box.innerHTML = '<div class="empty"><div class="icon">📂</div>暂无记录</div>'; return; }
+  if (!box) return;
+  const recs = (_records || []).filter(r => r.store === storeName).sort((a,b) => (b.date||'').localeCompare(a.date||''));
+  if (recs.length === 0) { box.innerHTML = '<div class="empty-state"><div class="icon">📂</div>暂无记录</div>'; return; }
   box.innerHTML = recs.map(r => `
     <div class="h-item">
       <span class="h-date">${r.date}</span>
-      <span class="h-type ${r.type}">${r.type === 'pre' ? '📋 会前大纲' : '📝 会后纪要'}</span>
-      <span class="st-badge ${r.status}" style="margin-left:8px;">${r.status === 'done' ? '✅已完成' : r.status === 'pending' ? '⏳待复盘' : '❌已取消'}</span>
-      <div class="h-summary">${(r.content || '').slice(0, 80)}${(r.content || '').length > 80 ? '...' : ''}</div>
+      <span class="h-type ${r.type}">${r.type==='pre'?'📋 会前大纲':'📝 会后纪要'}</span>
+      <span style="font-size:10.5px;padding:1px 6px;border-radius:4px;margin-left:6px;${r.status==='done'?'background:rgba(0,255,136,.1);color:var(--green)':r.status==='pending'?'background:rgba(255,159,67,.12);color:var(--orange)':'background:rgba(90,106,138,.12);color:var(--t3)'}">${r.status==='done'?'✅已完成':r.status==='pending'?'⏳待复盘':'❌已取消'}</span>
+      <div class="h-summary">${(r.content||'').slice(0,80)}${(r.content||'').length>80?'...':''}</div>
       <span class="h-expand" onclick="toggleFull(this)">📖 展开全文</span>
-      <div class="h-full">${r.content || ''}</div>
+      <div class="h-full">${r.content||''}</div>
     </div>
   `).join('');
 }
@@ -598,148 +875,17 @@ function toggleFull(el) {
 }
 
 // ═══════════════════════════════════════════
-//  复盘记录页
+//  Tab 切换
 // ═══════════════════════════════════════════
-function renderRecords() {
-  const fs = document.getElementById('filterStore').value;
-  const ft = document.getElementById('filterType').value;
-  const fm = document.getElementById('filterMonth').value;
-  let recs = [..._records].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-  if (fs) recs = recs.filter(r => r.store === fs);
-  if (ft) recs = recs.filter(r => r.type === ft);
-  if (fm) recs = recs.filter(r => (r.date || '').startsWith(fm));
-  const box = document.getElementById('recordList');
-  if (recs.length === 0) { box.innerHTML = '<div class="empty"><div class="icon">📭</div>暂无复盘记录</div>'; return; }
-  box.innerHTML = recs.map(r => {
-    const s = STORES.find(s => s.name === r.store) || {};
-    const brand = BRANDS[s.brand] || BRANDS['广本'];
-    return `<div class="r-item">
-      <div class="r-dot" style="background:${r.type === 'pre' ? brand.color : 'var(--green)'}"></div>
-      <div class="r-info">
-        <div class="r-title">${r.store} <span style="font-size:11.5px;color:var(--t3);font-weight:400;">${r.type === 'pre' ? '会前大纲' : '会后纪要'}</span></div>
-        <div class="r-meta">${r.date} · ${r.status === 'done' ? '✅已完成' : r.status === 'pending' ? '⏳待复盘' : '❌已取消'}</div>
-        <div class="r-snippet">${(r.content || '').slice(0, 120)}${(r.content || '').length > 120 ? '...' : ''}</div>
-      </div>
-      <span class="r-badge ${r.status === 'done' ? 'done' : r.status === 'pending' ? 'pending' : 'none'}">${r.status === 'done' ? '已完成' : r.status === 'pending' ? '待复盘' : '已取消'}</span>
-      <div class="r-actions"><button class="btn-sm" onclick="deleteRecord('${r.createdAt}')">删除</button></div>
-    </div>`;
-  }).join('');
-}
-
-async function deleteRecord(createdAt) {
-  if (!confirm('确定删除这条记录？')) return;
-  _records = _records.filter(r => r.createdAt !== createdAt);
-  await pushToGist();
-  renderRecords(); renderStores();
-  showToast('✅ 已删除并同步');
-}
-
-// ═══════════════════════════════════════════
-//  排班日历
-// ═══════════════════════════════════════════
-function renderSchedule() {
-  const grid = document.getElementById('scheduleGrid');
-  grid.innerHTML = '';
-  const curMonth = new Date().toISOString().slice(0, 7);
-  let totalSlots = 0, doneSlots = 0;
-  STORES.forEach((s, i) => {
-    const brand = BRANDS[s.brand] || BRANDS['广本'];
-    const storeSch = _schedule[s.name] || [];
-    const thisMonth = storeSch.filter(sl => (sl.date || '').startsWith(curMonth));
-    const done = thisMonth.filter(sl => sl.status === 'done').length;
-    totalSlots += thisMonth.length;
-    doneSlots += done;
-    const card = document.createElement('div');
-    card.className = 'store-card';
-    const slotsHTML = thisMonth.length > 0
-      ? thisMonth.map(sl => {
-          const dot = sl.status === 'done' ? '#00ff88' : sl.status === 'pending' ? '#ff9f43' : '#5a6a8a';
-          return `<div class="info-row" style="margin-bottom:3px;align-items:center;">
-            <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${dot};margin-right:5px;flex-shrink:0;"></span>
-            <span style="flex:1;">${sl.date}</span>
-            <select onchange="updateSlotStatus('${s.name}','${sl.date}',this.value)" style="font-size:10.5px;background:var(--bg1);border:1px solid #2a3055;color:var(--t2);border-radius:4px;padding:1px 4px;font-family:inherit;cursor:pointer;">
-              <option value="pending" ${sl.status === 'pending' ? 'selected' : ''}>⏳待复盘</option>
-              <option value="done" ${sl.status === 'done' ? 'selected' : ''}>✅已完成</option>
-              <option value="cancelled" ${sl.status === 'cancelled' ? 'selected' : ''}>❌已取消</option>
-            </select>
-            <button onclick="event.stopPropagation();deleteSlotInline('${s.name}','${sl.date}')" style="background:none;border:none;color:var(--t3);font-size:12px;cursor:pointer;padding:0 2px;" title="删除">✕</button>
-          </div>`;
-        }).join('')
-      : '<div class="info-row" style="color:var(--t3);">暂无本月排班</div>';
-    card.innerHTML = `
-      <div class="brand-bar" style="background:${brand.color}"></div>
-      <div class="header"><span class="name">${s.name}</span><span class="brand-tag" style="background:${brand.bg};color:${brand.color}">${s.brand}</span></div>
-      <div class="info-row"><span class="icon">📅</span>每周${s.day}（时间以老师预约为准）</div>
-      <div class="info-row"><span class="icon">👩🏫</span>${s.teachers}</div>
-      <div style="margin-top:8px;font-size:12px;color:var(--accent);font-weight:600;">本月排班（${thisMonth.length}次，已完成${done}）：</div>
-      ${slotsHTML}
-      <div style="margin-top:8px;display:flex;gap:4px;align-items:center;">
-        <input id="quickDate_${i}" type="text" placeholder="预约日期，如：6月11日" style="flex:1;background:var(--bg1);border:1px solid #2a3055;color:var(--t1);border-radius:6px;padding:5px 8px;font-size:12px;font-family:inherit;outline:none;min-width:0;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='#2a3055'">
-        <button onclick="event.stopPropagation();quickBook(${i})" style="background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;font-weight:700;border:none;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit;white-space:nowrap;">✅ 预约</button>
-      </div>
-    `;
-    grid.appendChild(card);
-  });
-  document.getElementById('schTotal').textContent = STORES.length;
-  document.getElementById('schThisMonth').textContent = totalSlots;
-  document.getElementById('schNext').textContent = doneSlots;
-}
-
-async function quickBook(idx) {
-  const s = STORES[idx];
-  const input = document.getElementById('quickDate_' + idx);
-  const date = input.value.trim();
-  if (!date) { input.style.borderColor = 'var(--red)'; setTimeout(() => input.style.borderColor = '#2a3055', 1500); return; }
-  if (!_schedule[s.name]) _schedule[s.name] = [];
-  if (_schedule[s.name].some(sl => sl.date === date)) { input.value = ''; renderSchedule(); return; }
-  _schedule[s.name].push({ date, status: 'pending', createdAt: new Date().toISOString() });
-  await pushToGist();
-  input.value = '';
-  renderSchedule();
-  showToast('✅ 预约已同步到云端');
-}
-
-async function updateSlotStatus(storeName, date, status) {
-  const slots = _schedule[storeName] || [];
-  const sl = slots.find(s => s.date === date);
-  if (sl) sl.status = status;
-  await pushToGist();
-  renderSchedule(); renderStores();
-}
-
-async function deleteSlotInline(storeName, date) {
-  if (!confirm('删除「' + date + '」的排班？')) return;
-  _schedule[storeName] = (_schedule[storeName] || []).filter(sl => sl.date !== date);
-  await pushToGist();
-  renderSchedule();
-  showToast('✅ 已删除并同步');
-}
-
-// ═══════════════════════════════════════════
-//  投喂纪要
-// ═══════════════════════════════════════════
-function populateFeedForm() {
-  const sel = document.getElementById('feedStore');
-  sel.innerHTML = STORES.map(s => `<option value="${s.name}">${s.name}（${s.brand}）</option>`).join('');
-  const now = new Date();
-  document.getElementById('feedDate').value = `${now.getMonth() + 1}月${now.getDate()}日`;
-}
-
-async function saveFeed() {
-  const store = document.getElementById('feedStore').value;
-  const date = document.getElementById('feedDate').value;
-  const type = document.getElementById('feedType').value;
-  const content = document.getElementById('feedContent').value.trim();
-  if (!store || !date || !content) { document.getElementById('feedMsg').textContent = '请填写完整信息'; document.getElementById('feedMsg').style.color = 'var(--red)'; return; }
-  _records.push({ store, date, type, status: 'done', content, createdAt: new Date().toISOString() });
-  const ok = await pushToGist();
-  if (ok) {
-    document.getElementById('feedMsg').textContent = '✅ 纪要已归档到云端！'; document.getElementById('feedMsg').style.color = 'var(--green)';
-    document.getElementById('feedContent').value = '';
-    renderStores(); showToast('✅ 已同步到云端');
-  } else {
-    document.getElementById('feedMsg').textContent = '❌ 保存失败'; document.getElementById('feedMsg').style.color = 'var(--red)';
-  }
+function switchTab(tab) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.topbar .tabs button').forEach(b => b.classList.remove('active'));
+  const pageId = 'page' + tab.charAt(0).toUpperCase() + tab.slice(1);
+  document.getElementById(pageId).classList.add('active');
+  event?.currentTarget?.classList.add('active');
+  
+  if (tab === 'schedule') { renderCalendar(); renderSchedule(); }
+  if (tab === 'review') { renderStoreList(); }
 }
 
 // ═══════════════════════════════════════════
@@ -749,18 +895,14 @@ function showTokenDialog() {
   document.getElementById('tokenOverlay').classList.add('active');
   const st = document.getElementById('tokenStatus');
   if (getToken()) {
-    st.textContent = '✅ 已配置 Token（' + getToken().slice(0, 10) + '...）';
+    st.textContent = '✅ 已配置 Token（' + getToken().slice(0,10) + '...）';
     st.className = 'status ok';
   } else {
     st.textContent = '⚠️ 尚未配置 Token，无法保存数据';
     st.className = 'status none';
   }
 }
-
-function closeTokenDialog() {
-  document.getElementById('tokenOverlay').classList.remove('active');
-}
-
+function closeTokenDialog() { document.getElementById('tokenOverlay').classList.remove('active'); }
 function saveToken() {
   const val = document.getElementById('tokenInput').value.trim();
   if (!val) { showToast('请粘贴 Token', true); return; }
@@ -768,34 +910,32 @@ function saveToken() {
   document.getElementById('tokenInput').value = '';
   closeTokenDialog();
   setSyncStatus('ok');
-  showToast('✅ Token 已保存，可以同步数据了');
+  showToast('✅ Token 已保存');
 }
-
 function clearToken() {
   localStorage.removeItem('gist_token');
   document.getElementById('tokenInput').value = '';
-  document.getElementById('tokenStatus').textContent = '⚠️ 尚未配置 Token，无法保存数据';
+  document.getElementById('tokenStatus').textContent = '⚠️ 尚未配置 Token';
   document.getElementById('tokenStatus').className = 'status none';
   setSyncStatus('no_token');
   showToast('Token 已清除');
 }
+
+// ═══════════════════════════════════════════
+//  初始化
+// ═══════════════════════════════════════════
 async function init() {
-  // 先从 Gist 加载数据（读取不需要 Token）
+  initCalendar();
   await fetchFromGist();
-
-  // 如果没配置 Token，提示用户
-  if (!getToken()) {
-    setSyncStatus('no_token');
-  }
-
-  renderStores();
-  const fs = document.getElementById('filterStore');
-  fs.innerHTML = '<option value="">全部门店</option>' + STORES.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
-  document.getElementById('headerDate').textContent = new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: 'long' });
-  document.getElementById('filterMonth').value = new Date().toISOString().slice(0, 7);
-
-  // 每 30 秒自动同步一次
-  setInterval(silentRefresh, 30000);
+  
+  if (!getToken()) setSyncStatus('no_token');
+  
+  renderCalendar();
+  renderSchedule();
+  renderStoreList();
+  
+  // 每 10 秒静默检查是否有更新
+  setInterval(silentRefresh, 10000);
 }
 
 init();
