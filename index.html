@@ -123,6 +123,22 @@ html,body{height:100%;font-family:'Microsoft YaHei','PingFang SC',sans-serif;bac
 .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--green);color:#000;font-weight:700;padding:10px 24px;border-radius:20px;font-size:13px;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;}
 .toast.error{background:var(--red);color:#fff;}
 .toast.show{opacity:1;}
+
+.token-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;display:none;justify-content:center;align-items:center;}
+.token-overlay.active{display:flex;}
+.token-dialog{background:var(--bg2);border:1px solid #1e2744;border-radius:14px;width:480px;padding:24px;}
+.token-dialog h3{font-size:16px;margin-bottom:8px;}
+.token-dialog p{font-size:12.5px;color:var(--t2);margin-bottom:14px;line-height:1.6;}
+.token-dialog input{width:100%;background:var(--bg1);border:1px solid #2a3055;color:var(--t1);border-radius:8px;padding:10px 14px;font-size:13px;font-family:monospace;outline:none;margin-bottom:14px;}
+.token-dialog input:focus{border-color:var(--accent);}
+.token-dialog .btn-row{display:flex;gap:8px;justify-content:flex-end;}
+.token-dialog .btn-row button{padding:8px 20px;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit;border:none;}
+.token-dialog .btn-save{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;font-weight:700;}
+.token-dialog .btn-clear{background:var(--bg3);border:1px solid #2a3055;color:var(--t2);}
+.token-dialog .btn-close{background:none;color:var(--t3);}
+.token-dialog .status{font-size:12px;margin-bottom:10px;}
+.token-dialog .status.ok{color:var(--green);}
+.token-dialog .status.none{color:var(--t3);}
 </style>
 </head>
 <body>
@@ -140,6 +156,7 @@ html,body{height:100%;font-family:'Microsoft YaHei','PingFang SC',sans-serif;bac
     <span class="sync-dot" id="syncDot"></span>
     <span>本月复盘 <span class="badge" id="headerCount">0/7</span></span>
     <span id="headerDate"></span>
+    <button onclick="showTokenDialog()" style="background:var(--bg3);border:1px solid #2a3055;color:var(--t2);font-size:11px;padding:3px 10px;border-radius:6px;cursor:pointer;font-family:inherit;" title="设置 GitHub Token">🔑 设置Token</button>
   </div>
 </div>
 
@@ -237,19 +254,42 @@ html,body{height:100%;font-family:'Microsoft YaHei','PingFang SC',sans-serif;bac
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
+<!-- Token 配置弹窗 -->
+<div class="token-overlay" id="tokenOverlay">
+  <div class="token-dialog">
+    <h3>🔑 GitHub Token 配置</h3>
+    <p>写入数据需要 GitHub Token（读取不需要）。Token 仅保存在你的浏览器中，不会上传到任何地方。<br>去 <a href="https://github.com/settings/tokens" target="_blank" style="color:var(--accent);">github.com/settings/tokens</a> 生成，勾选 <b>gist</b> 权限即可。</p>
+    <div class="status" id="tokenStatus"></div>
+    <input type="password" id="tokenInput" placeholder="粘贴 Token...">
+    <div class="btn-row">
+      <button class="btn-clear" onclick="clearToken()">清除</button>
+      <button class="btn-close" onclick="closeTokenDialog()">取消</button>
+      <button class="btn-save" onclick="saveToken()">💾 保存</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ═══════════════════════════════════════════
 //  GitHub Gist API 数据层
 // ═══════════════════════════════════════════
 const GIST_ID = '69495eeba22b7ec386e6663e5dd6fb0b';
 const GIST_FILENAME = 'peipao-data.json';
-const TOKEN = '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';
+const GIST_RAW = 'https://gist.githubusercontent.com/cdq3000/' + GIST_ID + '/raw/' + GIST_FILENAME;
 const API_BASE = 'https://api.github.com/gists/' + GIST_ID;
-const HEADERS = {
-  'Authorization': 'Bearer ' + TOKEN,
-  'Accept': 'application/vnd.github+json',
-  'X-GitHub-Api-Version': '2022-11-28'
-};
+
+// Token 从 localStorage 读取，不在代码里写死
+function getToken() { return localStorage.getItem('gist_token') || ''; }
+function setToken(t) { localStorage.setItem('gist_token', t); }
+
+function authHeaders() {
+  const t = getToken();
+  return t ? {
+    'Authorization': 'Bearer ' + t,
+    'Accept': 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28'
+  } : null;
+}
 
 // 本地内存缓存
 let _schedule = {};
@@ -260,23 +300,24 @@ function setSyncStatus(status) {
   const dot = document.getElementById('syncDot');
   const label = document.getElementById('syncLabel');
   dot.className = 'sync-dot' + (status === 'syncing' ? ' syncing' : '');
-  label.textContent = status === 'syncing' ? '同步中...' : status === 'ok' ? '已同步' : '离线';
+  if (status === 'ok') label.textContent = '已同步';
+  else if (status === 'syncing') label.textContent = '同步中...';
+  else if (status === 'no_token') label.textContent = '需配置';
+  else label.textContent = '离线';
 }
 
-// 从 Gist 读取数据
+// 从 Gist 读取数据（公开 Gist，无需 Token）
 async function fetchFromGist() {
   setSyncStatus('syncing');
   try {
-    const resp = await fetch(API_BASE, { headers: HEADERS });
+    // 用 raw URL 读取，无需认证
+    const resp = await fetch(GIST_RAW + '?t=' + Date.now());
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const gist = await resp.json();
-    const file = gist.files[GIST_FILENAME];
-    if (!file || !file.content) throw new Error('No data file');
-    const data = JSON.parse(file.content);
+    const data = await resp.json();
     _schedule = data.schedule || {};
     _records = data.records || [];
     _lastUpdated = data.lastUpdated || '';
-    setSyncStatus('ok');
+    setSyncStatus(getToken() ? 'ok' : 'no_token');
     return true;
   } catch (e) {
     console.error('Fetch failed:', e);
@@ -286,8 +327,12 @@ async function fetchFromGist() {
   }
 }
 
-// 写回 Gist
+// 写回 Gist（需要 Token）
 async function pushToGist() {
+  if (!getToken()) {
+    showToast('⚠️ 请先点击右上角"设置Token"', true);
+    return false;
+  }
   setSyncStatus('syncing');
   const data = {
     schedule: _schedule,
@@ -300,7 +345,7 @@ async function pushToGist() {
   try {
     const resp = await fetch(API_BASE, {
       method: 'PATCH',
-      headers: { ...HEADERS, 'Content-Type': 'application/json' },
+      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
       body
     });
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
@@ -315,22 +360,19 @@ async function pushToGist() {
   }
 }
 
-// 静默刷新（定时同步）
+// 静默刷新（定时同步，读数据不需要 Token）
 async function silentRefresh() {
   try {
-    const resp = await fetch(API_BASE, { headers: HEADERS });
+    const resp = await fetch(GIST_RAW + '?t=' + Date.now());
     if (!resp.ok) return;
-    const gist = await resp.json();
-    const file = gist.files[GIST_FILENAME];
-    if (!file || !file.content) return;
-    const data = JSON.parse(file.content);
+    const data = await resp.json();
     if (data.lastUpdated !== _lastUpdated) {
       _schedule = data.schedule || {};
       _records = data.records || [];
       _lastUpdated = data.lastUpdated || '';
       refreshUI();
     }
-    setSyncStatus('ok');
+    setSyncStatus(getToken() ? 'ok' : 'no_token');
   } catch (e) { /* silent */ }
 }
 
@@ -701,11 +743,50 @@ async function saveFeed() {
 }
 
 // ═══════════════════════════════════════════
-//  初始化
+//  Token 管理
 // ═══════════════════════════════════════════
+function showTokenDialog() {
+  document.getElementById('tokenOverlay').classList.add('active');
+  const st = document.getElementById('tokenStatus');
+  if (getToken()) {
+    st.textContent = '✅ 已配置 Token（' + getToken().slice(0, 10) + '...）';
+    st.className = 'status ok';
+  } else {
+    st.textContent = '⚠️ 尚未配置 Token，无法保存数据';
+    st.className = 'status none';
+  }
+}
+
+function closeTokenDialog() {
+  document.getElementById('tokenOverlay').classList.remove('active');
+}
+
+function saveToken() {
+  const val = document.getElementById('tokenInput').value.trim();
+  if (!val) { showToast('请粘贴 Token', true); return; }
+  setToken(val);
+  document.getElementById('tokenInput').value = '';
+  closeTokenDialog();
+  setSyncStatus('ok');
+  showToast('✅ Token 已保存，可以同步数据了');
+}
+
+function clearToken() {
+  localStorage.removeItem('gist_token');
+  document.getElementById('tokenInput').value = '';
+  document.getElementById('tokenStatus').textContent = '⚠️ 尚未配置 Token，无法保存数据';
+  document.getElementById('tokenStatus').className = 'status none';
+  setSyncStatus('no_token');
+  showToast('Token 已清除');
+}
 async function init() {
-  // 先从 Gist 加载数据
+  // 先从 Gist 加载数据（读取不需要 Token）
   await fetchFromGist();
+
+  // 如果没配置 Token，提示用户
+  if (!getToken()) {
+    setSyncStatus('no_token');
+  }
 
   renderStores();
   const fs = document.getElementById('filterStore');
